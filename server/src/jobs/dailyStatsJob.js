@@ -22,7 +22,7 @@ const dailyStatsJob = () => {
         } catch (error) {
             logger.error("Daily stats job failed", error);
         }
-    });
+    }));
 
     track(task);
 };

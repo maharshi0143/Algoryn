@@ -27,7 +27,7 @@ const leetcodeSyncJob = () => {
         } catch (error) {
             logger.error("LeetCode sync job failed", error);
         }
-    });
+    }));
 
     track(task);
 };

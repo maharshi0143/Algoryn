@@ -27,7 +27,7 @@ const githubSyncJob = () => {
         } catch (error) {
             logger.error("GitHub sync job failed", error);
         }
-    });
+    }));
 
     track(task);
 };

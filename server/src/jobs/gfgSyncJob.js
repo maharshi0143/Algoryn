@@ -27,7 +27,7 @@ const gfgSyncJob = () => {
         } catch (error) {
             logger.error("GFG sync job failed", error);
         }
-    });
+    }));
 
     track(task);
 };

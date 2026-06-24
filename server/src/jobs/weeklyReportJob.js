@@ -29,7 +29,7 @@ const weeklyReportJob = () => {
         } catch (error) {
             logger.error("Weekly report job failed", error);
         }
-    });
+    }));
 
     track(task);
 };

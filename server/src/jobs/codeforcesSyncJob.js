@@ -27,7 +27,7 @@ const codeforcesSyncJob = () => {
         } catch (error) {
             logger.error("Codeforces sync job failed", error);
         }
-    });
+    }));
 
     track(task);
 };

@@ -13,7 +13,7 @@ const contestReminderJob = () => {
         } catch (error) {
             logger.error("Contest reminder job failed", error);
         }
-    });
+    }));
 
     track(task);
 };

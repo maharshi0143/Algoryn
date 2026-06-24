@@ -22,7 +22,7 @@ const achievementJob = () => {
         } catch (error) {
             logger.error("Achievement job failed", error);
         }
-    });
+    }));
 
     track(task);
 };

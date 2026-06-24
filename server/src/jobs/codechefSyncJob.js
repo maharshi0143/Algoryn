@@ -27,7 +27,7 @@ const codechefSyncJob = () => {
         } catch (error) {
             logger.error("CodeChef sync job failed", error);
         }
-    });
+    }));
 
     track(task);
 };
