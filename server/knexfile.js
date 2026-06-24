@@ -1,10 +1,7 @@
 if (process.env.NODE_ENV !== "production") {
-    require("dotenv").config({
-        path: require("path").resolve(
-            __dirname,
-            `../../.env.${process.env.NODE_ENV || "development"}`
-        )
-    });
+    const envFile = `.env.${process.env.NODE_ENV || "development"}`;
+    const envPath = require("path").resolve(__dirname, envFile);
+    require("dotenv").config({ path: envPath });
 }
 
 module.exports = {
