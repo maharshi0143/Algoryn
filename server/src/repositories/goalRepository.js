@@ -1,4 +1,4 @@
-const db = require("../config/db");
+const { pool: db } = require("../config/db");
 
 const createGoal = async (userId, target, month, year) => {
     const result = await db.query(

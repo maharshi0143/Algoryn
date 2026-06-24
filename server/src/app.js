@@ -6,6 +6,9 @@ const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const Sentry = require("@sentry/node");
 const apiLimiter = require("./middlewares/apiLimiter");
+const HTTP_STATUS = require("./constants/httpStatus");
+const healthController = require("./controllers/healthController");
+const logger = require("./utils/logger");
 
 Sentry.init({
     dsn: process.env.SENTRY_DSN,
@@ -53,18 +56,15 @@ app.use(cors({
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 app.use(compression());
-app.use(morgan("dev", { skip: (req) => req.url === "/api/health" }));
+app.use(morgan("combined", {
+    skip: (req) => req.url === "/api/health",
+    stream: { write: (msg) => logger.info(msg.trim()) },
+}));
 app.use(cookieParser());
 app.use(apiLimiter);
 
 // Health check route
-app.get("/api/health", (req, res) => {
-    res.status(200).json({
-        success: true,
-        data: null,
-        message: "Server is running"
-    });
-});
+app.get("/api/health", healthController.health);
 
 // API routes
 app.use("/api/auth", authRoutes);

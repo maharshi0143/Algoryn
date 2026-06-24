@@ -1,4 +1,4 @@
-const db = require("../config/db");
+const { pool: db } = require("../config/db");
 
 // Create a new notification for a user
 const createNotification = async (userId, type, message) => {

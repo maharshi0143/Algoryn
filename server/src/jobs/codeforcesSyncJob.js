@@ -1,13 +1,13 @@
 const cron = require("node-cron");
 const logger = require("../utils/logger");
 const { track } = require("../utils/cronTracker");
-
+const { withLock } = require("../utils/jobTracker");
 const userRepository = require("../repositories/userRepository");
 const profileRepository = require("../repositories/profileRepository");
 const syncService = require("../services/syncService");
 
 const codeforcesSyncJob = () => {
-    const task = cron.schedule("0 */6 * * *", async () => {
+    const task = cron.schedule("0 */6 * * *", withLock("codeforces-sync", async () => {
         logger.info("Running Codeforces sync job...");
 
         try {

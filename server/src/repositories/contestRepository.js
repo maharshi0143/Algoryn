@@ -1,4 +1,4 @@
-const db = require("../config/db");
+const { pool: db } = require("../config/db");
 
 // Get contest history for a profile, ordered by date descending (with pagination)
 const findContestHistory = async (profileId, limit = 20, offset = 0) => {

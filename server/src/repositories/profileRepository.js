@@ -1,4 +1,4 @@
-const db = require("../config/db");
+const { pool: db } = require("../config/db");
 
 // Create a new coding profile
 const createProfile = async (userId, platform, username, profileUrl) => {

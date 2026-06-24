@@ -1,4 +1,5 @@
 const Groq = require("groq-sdk");
+const HTTP_STATUS = require("../../constants/httpStatus");
 
 const groq = new Groq({
     apiKey: process.env.GROQ_API_KEY,
@@ -26,7 +27,7 @@ const generateResponse = async (prompt, systemPrompt) => {
         return systemPrompt ? content : content.replace(/\n/g, " ");
     } catch (error) {
         const err = new Error(`Groq AI error: ${error.message}`);
-        err.statusCode = 503;
+        err.statusCode = HTTP_STATUS.SERVICE_UNAVAILABLE;
         throw err;
     }
 };

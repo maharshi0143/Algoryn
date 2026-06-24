@@ -1,4 +1,4 @@
-const db = require("../config/db");
+const { pool: db } = require("../config/db");
 
 const createWeeklyReport = async (userId, weekStart, weekEnd, summary, recommendations) => {
     const result = await db.query(

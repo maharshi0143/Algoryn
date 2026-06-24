@@ -1,4 +1,4 @@
-const db = require("../config/db");
+const { pool: db } = require("../config/db");
 
 // Find GitHub stats by profile ID
 const findGithubStats = async (profileId) => {

@@ -1,4 +1,4 @@
-const db = require("../config/db");
+const { pool: db } = require("../config/db");
 
 // Find a user by their email
 const findUserByEmail = async (email) => {

@@ -1,4 +1,4 @@
-const db = require("../config/db");
+const { pool: db } = require("../config/db");
 
 // Store a refresh token for a user with an expiration date
 const saveRefreshToken = async (userId, token, expiresAt) => {

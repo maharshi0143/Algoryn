@@ -1,13 +1,13 @@
 const cron = require("node-cron");
 const logger = require("../utils/logger");
 const { track } = require("../utils/cronTracker");
-
+const { withLock } = require("../utils/jobTracker");
 const userRepository = require("../repositories/userRepository");
 const weeklyReportService = require("../services/weeklyReportService");
 const notificationService = require("../services/notificationService");
 
 const weeklyReportJob = () => {
-    const task = cron.schedule("0 9 * * 1", async () => {
+    const task = cron.schedule("0 9 * * 1", withLock("weekly-report", async () => {
         logger.info("Running weekly report job...");
 
         try {

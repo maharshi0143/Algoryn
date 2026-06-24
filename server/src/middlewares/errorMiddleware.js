@@ -6,13 +6,13 @@ const errorMiddleware = (err, req, res, next) => {
     const isPayloadTooLarge = err.type === "entity.too.large";
 
     if (isSyntaxError) {
-        return res.status(400).json({
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
             success: false, data: null, message: "Invalid JSON in request body",
         });
     }
 
     if (isPayloadTooLarge) {
-        return res.status(413).json({
+        return res.status(HTTP_STATUS.PAYLOAD_TOO_LARGE).json({
             success: false, data: null, message: "Request body too large",
         });
     }

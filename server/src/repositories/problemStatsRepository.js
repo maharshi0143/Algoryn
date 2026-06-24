@@ -1,4 +1,4 @@
-const db = require("../config/db");
+const { pool: db } = require("../config/db");
 
 // Get aggregated problem stats for a user across all platforms
 const findProblemStatsByUserId = async (userId) => {

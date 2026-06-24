@@ -1,4 +1,4 @@
-const db = require("../config/db");
+const { pool: db } = require("../config/db");
 
 // Get daily stats for the last 7 days
 const findWeeklyStats = async (userId) => {

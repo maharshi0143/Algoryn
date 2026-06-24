@@ -1,4 +1,4 @@
-const db = require("../config/db");
+const { pool: db } = require("../config/db");
 
 const findByUserId = async (userId) => {
     const result = await db.query(

@@ -1,5 +1,6 @@
 const axios = require("axios");
 const logger = require("../../utils/logger");
+const HTTP_STATUS = require("../../constants/httpStatus");
 
 const BASE_URL = "https://api.github.com";
 const GRAPHQL_URL = "https://api.github.com/graphql";
@@ -34,7 +35,7 @@ const fetchGithubProfile = async (username) => {
         return data;
     } catch (error) {
         const err = new Error(`GitHub API error: ${error.message}`);
-        err.statusCode = error.response?.status || 503;
+        err.statusCode = error.response?.status || HTTP_STATUS.SERVICE_UNAVAILABLE;
         throw err;
     }
 };
@@ -44,7 +45,7 @@ const fetchGithubRepositories = async (username) => {
         return await fetchAllPages(`${BASE_URL}/users/${username}/repos?per_page=100`);
     } catch (error) {
         const err = new Error(`GitHub API error: ${error.message}`);
-        err.statusCode = error.response?.status || 503;
+        err.statusCode = error.response?.status || HTTP_STATUS.SERVICE_UNAVAILABLE;
         throw err;
     }
 };
@@ -82,7 +83,7 @@ const fetchGithubContributions = async (username) => {
         return data.data?.user?.contributionsCollection?.contributionCalendar?.totalContributions ?? 0;
     } catch (error) {
         const err = new Error(`GitHub GraphQL error for ${username}: ${error.message}`);
-        err.statusCode = error.response?.status || 503;
+        err.statusCode = error.response?.status || HTTP_STATUS.SERVICE_UNAVAILABLE;
         throw err;
     }
 };

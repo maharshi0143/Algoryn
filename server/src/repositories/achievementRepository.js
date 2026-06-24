@@ -1,4 +1,4 @@
-const db = require("../config/db");
+const { pool: db } = require("../config/db");
 
 // Create a new achievement for a user
 const createAchievement = async (userId, type, title, description, icon) => {

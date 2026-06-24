@@ -7,24 +7,36 @@ const logger = require("./utils/logger");
 const { stopAll } = require("./utils/cronTracker");
 
 const app = require("./app");
+const { pool, waitForDatabase } = require("./config/db");
 const { initializeSocket } = require("./config/socket");
 const initializeJobs = require("./jobs");
 
 const PORT = process.env.PORT || 5000;
 
-try {
-    initializeJobs();
-} catch (error) {
-    logger.error("Failed to initialize jobs:", error);
-}
+const start = async () => {
+    try {
+        await waitForDatabase();
+    } catch (error) {
+        logger.error("Failed to connect to database, exiting:", error);
+        process.exit(1);
+    }
 
-const server = http.createServer(app);
+    try {
+        initializeJobs();
+    } catch (error) {
+        logger.error("Failed to initialize jobs:", error);
+    }
 
-initializeSocket(server);
+    const server = http.createServer(app);
 
-server.listen(PORT, () => {
-    logger.info(`Server running on port ${PORT}`);
-});
+    initializeSocket(server);
+
+    server.listen(PORT, () => {
+        logger.info(`Server running on port ${PORT}`);
+    });
+};
+
+start();
 
 const gracefulShutdown = async (signal) => {
     logger.info(`${signal} received: closing server...`);
@@ -38,7 +50,6 @@ const gracefulShutdown = async (signal) => {
             io.close();
         } catch { }
 
-        const pool = require("./config/db");
         try {
             await pool.end();
         } catch { }

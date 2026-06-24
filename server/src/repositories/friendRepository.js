@@ -1,4 +1,4 @@
-const db = require("../config/db");
+const { pool: db } = require("../config/db");
 
 const sendFriendRequest = async (userId, friendId) => {
     const result = await db.query(

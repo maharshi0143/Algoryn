@@ -1,4 +1,4 @@
-const db = require("../config/db");
+const { pool: db } = require("../config/db");
 
 const createActivityLog = async (userId, action, description) => {
     const result = await db.query(

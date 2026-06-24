@@ -1,12 +1,12 @@
 const cron = require("node-cron");
 const logger = require("../utils/logger");
 const { track } = require("../utils/cronTracker");
-
+const { withLock } = require("../utils/jobTracker");
 const userRepository = require("../repositories/userRepository");
 const dailyStatsService = require("../services/dailyStatsService");
 
 const dailyStatsJob = () => {
-    const task = cron.schedule("0 0 * * *", async () => {
+    const task = cron.schedule("0 0 * * *", withLock("daily-stats", async () => {
         logger.info("Running daily stats job...");
 
         try {

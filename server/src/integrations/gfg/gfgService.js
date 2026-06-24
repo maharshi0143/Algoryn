@@ -1,4 +1,5 @@
 const axios = require("axios");
+const HTTP_STATUS = require("../../constants/httpStatus");
 
 const BASE_URL = "https://gfg-stats.tashif.codes";
 
@@ -8,7 +9,7 @@ const fetchGFGProfile = async (username) => {
         return data;
     } catch (error) {
         const err = new Error(`GFG API error: ${error.message}`);
-        err.statusCode = error.response?.status || 503;
+        err.statusCode = error.response?.status || HTTP_STATUS.SERVICE_UNAVAILABLE;
         throw err;
     }
 };
