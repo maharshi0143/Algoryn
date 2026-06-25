@@ -127,7 +127,163 @@ server/
 
 ## Architecture & Data Flow
 
-![Algoryn Backend Architecture](Algoryn%20backend%20architecture.png)
+```
+                                 ┌─────────────────────────────────────────────────────────────┐
+                                 │                        CLIENT                              │
+                                 │                   (Frontend App)                           │
+                                 └───────────────────────┬─────────────────────────────────────┘
+                                                         │  HTTP / WebSocket
+                                                         ▼
+┌───────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                MIDDLEWARE STACK (app.js)                                           │
+│                                                                                                    │
+│    helmet ──► cors ──► express.json (10kb) ──► compression ──► morgan ──► cookieParser ──► apiLimiter │
+└───────────────────────────────────────────────────────────────────────────────────────────────────┘
+                                 │
+                    ┌────────────┼────────────────────────────────────┐
+                    │            │            ┌───────────────────────┤
+                    ▼            ▼            ▼                       ▼
+            ┌────────────┐ ┌──────────┐ ┌──────────┐          ┌──────────┐
+            │  authLimiter│ │syncLimiter│ │aiLimiter │          │apiLimiter│
+            │  10/15min   │ │ 20/hour   │ │ 50/hour  │          │500/15min │
+            └──────┬─────┘ └─────┬────┘ └────┬─────┘          └────┬─────┘
+                   │             │           │                     │
+                   ▼             ▼           ▼                     ▼
+       ┌─────────────────────────────────────────────────────────────────────────┐
+       │                         ROUTE LAYER (18 modules)                        │
+       │                                                                         │
+       │  /api/auth   /api/profiles   /api/sync   /api/dashboard   /api/analytics│
+       │  /api/notif  /api/achiev    /api/contest /api/ai          /api/daily-st │
+       │  /api/goals  /api/friends   /api/leader  /api/reports     /api/contest-r│
+       │  /api/public /api/export    /api/email-p                                 │
+       └─────────────────────────────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+       ┌─────────────────────────────────────────────────────────────────────────┐
+       │                     VALIDATORS (6 modules)                               │
+       │                                                                         │
+       │   authValidator  profileValidator  notificationValidator                 │
+       │   goalValidator   friendValidator  contestReminderValidator              │
+       └─────────────────────────────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+       ┌─────────────────────────────────────────────────────────────────────────┐
+       │                     CONTROLLERS (19 modules)                             │
+       │   (Parse request → call service → format response)                      │
+       └─────────────────────────────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+       ┌─────────────────────────────────────────────────────────────────────────┐
+       │                       SERVICES (19 modules)                              │
+       │   (Business logic, validation, orchestration)                           │
+       └─────────────────────────────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+       ┌─────────────────────────────────────────────────────────────────────────┐
+       │                     REPOSITORIES (19 modules)                            │
+       │   17 use raw pg (pool)  │  2 use Knex (analytics, leaderboard)          │
+       └─────────────────────────────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+       ┌─────────────────────────────────────────────────────────────────────────┐
+       │                     DATABASE ── PostgreSQL (NeonDB)                      │
+       │                                                                         │
+       │  users  refresh_tokens  coding_profiles  problem_stats  github_stats    │
+       │  daily_stats  contest_history  achievements  notifications  goals       │
+       │  friends  activity_logs  email_preferences  contest_reminders           │
+       │  weekly_reports                                                         │
+       │                                                                         │
+       │  4 Enums: platform_type, notification_type, achievement_type,           │
+       │           friend_status                                                 │
+       │  15 tables with auto-updated_at triggers on 9 tables                    │
+       └─────────────────────────────────────────────────────────────────────────┘
+
+
+┌───────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    EXTERNAL INTEGRATIONS                                       │
+│                                                                                               │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────┐ │
+│  │  GitHub  │  │ LeetCode │  │Codeforces│  │ CodeChef │  │   GFG    │  │HackerRank│  │ Groq │ │
+│  │REST+Graph│  │alfa-leet │  │  CF API  │  │  Vercel  │  │tashif.cd │  │  Vercel  │  │Llama │ │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘  └──┬───┘ │
+│       │             │             │             │             │             │           │     │
+└───────┼─────────────┼─────────────┼─────────────┼─────────────┼─────────────┼───────────┼─────┘
+        │             │             │             │             │             │           │
+        └─────────────┴─────────────┴─────────────┴─────────────┴─────────────┴───────────┘
+                                   ▲                                                      ▲
+                                   │                                                      │
+                                   ▼                                                      │
+┌──────────────────────────────────────────────────────────────────────────────────────────┘
+│                       BACKGROUND JOBS (9 cron tasks, all wrapped with withLock())
+│
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│  │  GitHub Sync    │  │  LeetCode Sync  │  │ Codeforces Sync │  │  CodeChef Sync  │
+│  │  Every 6 hours  │  │  Every 6 hours  │  │  Every 6 hours  │  │  Every 6 hours  │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘  └─────────────────┘
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│  │    GFG Sync     │  │  Achievements   │  │   Daily Stats   │  │  Weekly Report  │
+│  │  Every 6 hours  │  │ Daily midnight  │  │ Daily midnight  │  │   Mon 9 AM      │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘  └─────────────────┘
+│  ┌────────────────────────────────┐
+│  │     Contest Reminder           │
+│  │     Every 5 minutes            │
+│  └────────────────────────────────┘
+└─────────────────────────────────────────────────────────────────────────────────────
+
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│                              REAL-TIME & COMMUNICATION                               │
+│                                                                                     │
+│  ┌────────────────────────────────────────┐    ┌─────────────────────────────────┐  │
+│  │         Socket.IO                       │    │        Nodemailer (SMTP)        │  │
+│  │  • JWT auth at handshake               │    │  • Weekly Report Email         │  │
+│  │  • Room join (self-only)               │    │  • Contest Reminder Email      │  │
+│  │  • Emits "notification:new" event      │    │  • Streak Alert Email          │  │
+│  └────────────────────────────────────────┘    └─────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│                              UTILITY LAYER                                           │
+│                                                                                     │
+│  Winston Logger: console (colorized dev) + JSON + daily rotate file (prod)          │
+│  apiResponse(): Standard JSON envelope { success, message, data }                   │
+│  ApiError: Custom error class with statusCode                                       │
+│  asyncHandler: Wraps async route handlers to catch errors                           │
+│  cronTracker: Track & stop all cron tasks on shutdown                               │
+│  generateAccessToken: JWT with { userId, email }, 15m expiry                        │
+│  generateRefreshToken: JWT with { userId }, 7d expiry                               │
+│  withLock(): In-memory lock to prevent overlapping cron executions                  │
+│  Morgan HTTP logging piped through Winston                                           │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│                              SECURITY & MONITORING                                   │
+│                                                                                     │
+│  • Sentry error tracking (0.1 trace sample in prod, disabled in dev)                │
+│  • Helmet security headers (CSP, X-Frame-Options, etc.)                             │
+│  • CORS single-origin (CLIENT_URL)                                                  │
+│  • Express body size limit: 10KB                                                    │
+│  • 4 rate limiters (global 500/15min, auth 10/15min, sync 20/hr, AI 50/hr)         │
+│  • JWT verification on all protected routes                                         │
+│  • Input validation via express-validator on all mutation endpoints                  │
+│  • Password hashing with bcrypt (10 rounds)                                         │
+│  • Refresh token rotation on each use                                               │
+│  • Deactivated account (is_active=false) blocked at middleware level                │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│                              AUTH FLOW                                               │
+│                                                                                     │
+│  1. Register/Login → bcrypt verify → generate accessToken (15m) + refreshToken (7d) │
+│  2. Save refreshToken hash to refresh_tokens table                                  │
+│  3. Set refreshToken as httpOnly, secure, sameSite=strict cookie                    │
+│  4. Client sends accessToken in Authorization: Bearer header                        │
+│  5. authMiddleware verifies JWT → looks up user → checks is_active                  │
+│  6. Refresh: read cookie → verify JWT → delete old → issue new pair                │
+│  7. Logout: delete refreshToken from DB → clear cookie                              │
+│                                                                                     │
+│  Payloads: accessToken { userId, email }    refreshToken { userId }                 │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+```
 
 ### Request Lifecycle
 
