@@ -127,25 +127,7 @@ server/
 
 ## Architecture & Data Flow
 
-```
-┌──────────────┐     HTTP/WebSocket      ┌───────────────────────────────────────────────┐
-│   Frontend    │ ──────────────────────► │               Express Server                   │
-│   (Client)    │ ◄────────────────────── │                                               │
-└──────────────┘                         │  Middleware Pipeline:                          │
-                                         │    helmet → cors → json → compression →        │
-                                         │    morgan → cookieParser → apiLimiter          │
-                                         │                                               │
-                                         │  Route → Validators → Controller → Service →  │
-                                         │    Repository → PostgreSQL                     │
-                                         │                  ↕                            │
-                                         │         External APIs (6 platforms)            │
-                                         │                  ↕                            │
-                                         │         Groq AI (Llama 3.3 70B)               │
-                                         │                                               │
-                                         │  Background: 9 cron jobs (node-cron)           │
-                                         │  Real-time: Socket.IO (notification:new)       │
-                                         └───────────────────────────────────────────────┘
-```
+![Algoryn Backend Architecture](Algoryn%20backend%20architecture.png)
 
 ### Request Lifecycle
 
