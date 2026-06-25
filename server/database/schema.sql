@@ -48,12 +48,11 @@ CREATE TABLE users (
     bio TEXT,
     is_verified BOOLEAN DEFAULT FALSE,
     is_active BOOLEAN DEFAULT TRUE,
+    verification_token_hash TEXT,
+    verification_token_expires_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
--- Users
-ALTER TABLE users ADD CONSTRAINT chk_users_name_length CHECK (char_length(name) >= 2);
 
 CREATE INDEX idx_users_email
 ON users(email);

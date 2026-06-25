@@ -1,6 +1,6 @@
 const { body } = require("express-validator");
 
-const NOTIFICATION_TYPES = ["achievement", "contest", "weekly_report", "streak", "sync"];
+const NOTIFICATION_TYPES = ["achievement", "contest", "weekly_report", "streak", "sync", "friend"];
 
 // Validation rules for creating a notification
 const createNotificationValidator = [

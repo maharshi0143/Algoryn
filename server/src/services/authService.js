@@ -1,5 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 
 const ApiError = require("../utils/ApiError");
 const HTTP_STATUS = require("../constants/httpStatus");
@@ -7,6 +8,9 @@ const logger = require("../utils/logger");
 
 const generateAccessToken = require("../utils/generateAccessToken");
 const generateRefreshToken = require("../utils/generateRefreshToken");
+const { generateVerificationToken } = require("../utils/verificationToken");
+const { sendVerificationEmail } = require("./emailService");
+
 
 const userRepository = require("../repositories/userRepository");
 const refreshTokenRepository = require("../repositories/refreshTokenRepository");
@@ -21,7 +25,19 @@ const registerUser = async (name, email, password) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await userRepository.createUser(name, email, hashedPassword);
+    const {
+        token,
+        tokenHash,
+        expiresAt: verificationTokenExpiresAt,
+    } = generateVerificationToken();
+
+    const user = await userRepository.createUser(
+        name,
+        email,
+        hashedPassword,
+        tokenHash,
+        verificationTokenExpiresAt
+    );
 
     const accessToken = generateAccessToken({
         userId: user.id,
@@ -36,6 +52,18 @@ const registerUser = async (name, email, password) => {
     expiresAt.setDate(expiresAt.getDate() + 7);
 
     await refreshTokenRepository.saveRefreshToken(user.id, refreshToken, expiresAt);
+
+    const verificationUrl = `http://localhost:5000/api/auth/verify-email?token=${token}`;
+
+    try {
+        await sendVerificationEmail(
+            user.email,
+            user.name,
+            verificationUrl
+        );
+    } catch (err) {
+        logger.error(`Failed to send verification email to ${user.email}: ${err.message}`);
+    }
 
     return {
         user: {
@@ -60,6 +88,13 @@ const loginUser = async (email, password) => {
 
     if (!isPasswordValid) {
         throw new ApiError(HTTP_STATUS.UNAUTHORIZED, "Invalid credentials");
+    }
+
+    if (!user.is_verified) {
+        throw new ApiError(
+            HTTP_STATUS.FORBIDDEN,
+            "Please verify your email before logging in."
+        );
     }
 
     const accessToken = generateAccessToken({
@@ -166,6 +201,30 @@ const deleteAccount = async (userId) => {
     await userRepository.deleteUser(userId);
 };
 
+const verifyEmail = async (token) => {
+    const tokenHash = crypto
+        .createHash("sha256")
+        .update(token)
+        .digest("hex");
+
+    const user = await userRepository.findUserByVerificationTokenHash(
+        tokenHash
+    );
+
+    if (!user) {
+        throw new ApiError(
+            HTTP_STATUS.BAD_REQUEST,
+            "Invalid or expired verification link."
+        );
+    }
+
+    await userRepository.verifyUserEmail(user.id);
+
+    return {
+        message: "Email verified successfully.",
+    };
+};
+
 module.exports = {
     registerUser,
     loginUser,
@@ -174,4 +233,5 @@ module.exports = {
     refreshUserToken,
     changePassword,
     deleteAccount,
+    verifyEmail
 };

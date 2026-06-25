@@ -5,7 +5,7 @@ const createReminderValidator = [
         .trim()
         .notEmpty()
         .withMessage("Platform is required")
-        .isIn(["leetcode", "codeforces", "codechef"])
+        .isIn(["leetcode", "github", "codechef", "codeforces", "gfg", "hackerrank"])
         .withMessage("Invalid platform"),
 
     body("minutes_before")

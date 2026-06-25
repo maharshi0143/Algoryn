@@ -1,5 +1,6 @@
 const transporter = require("../config/email");
 const logger = require("../utils/logger");
+const verifyEmailTemplate = require("../templates/verifyEmailTemplate");
 
 const sendEmail = async ({ to, subject, text, html }) => {
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
@@ -9,7 +10,7 @@ const sendEmail = async ({ to, subject, text, html }) => {
 
     try {
         await transporter.sendMail({
-            from: `"DevTrack AI" <${process.env.SMTP_USER}>`,
+            from: process.env.SMTP_FROM || `"Algoryn" <${process.env.SMTP_USER}>`,
             to,
             subject,
             text,
@@ -17,15 +18,21 @@ const sendEmail = async ({ to, subject, text, html }) => {
         });
     } catch (error) {
         logger.error(`Email send failed: ${error.message}`);
+        throw error;
     }
 };
 
-const escHtml = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const escHtml = (s) =>
+    String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
 
 const sendWeeklyReportEmail = async (email, name) => {
     await sendEmail({
         to: email,
-        subject: "Your DevTrack Weekly Report is Ready",
+        subject: "Your Algoryn Weekly Report is Ready",
         html: `<h2>Hi ${escHtml(name)},</h2><p>Your weekly developer report is ready. Check it out on your dashboard.</p>`,
     });
 };
@@ -46,8 +53,17 @@ const sendStreakAlertEmail = async (email, name, streak) => {
     });
 };
 
+const sendVerificationEmail = async (email, name, verificationUrl) => {
+    await sendEmail({
+        to: email,
+        subject: "Verify your Algoryn account",
+        html: verifyEmailTemplate(name, verificationUrl),
+    });
+};
+
 module.exports = {
     sendEmail,
+    sendVerificationEmail,
     sendWeeklyReportEmail,
     sendContestReminderEmail,
     sendStreakAlertEmail,

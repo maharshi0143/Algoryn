@@ -13,35 +13,18 @@ const initializeJobs = require("./jobs");
 
 const PORT = process.env.PORT || 5000;
 
-const start = async () => {
-    try {
-        await waitForDatabase();
-    } catch (error) {
-        logger.error("Failed to connect to database, exiting:", error);
-        process.exit(1);
-    }
-
-    try {
-        initializeJobs();
-    } catch (error) {
-        logger.error("Failed to initialize jobs:", error);
-    }
-
-    const server = http.createServer(app);
-
-    initializeSocket(server);
-
-    server.listen(PORT, () => {
-        logger.info(`Server running on port ${PORT}`);
-    });
-};
-
-start();
+let server;
 
 const gracefulShutdown = async (signal) => {
     logger.info(`${signal} received: closing server...`);
 
     stopAll();
+
+    if (!server) {
+        logger.info("Server not started yet");
+        process.exit(0);
+        return;
+    }
 
     server.close(async () => {
         const { getIO } = require("./config/socket");
@@ -66,6 +49,31 @@ const gracefulShutdown = async (signal) => {
 
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+
+const start = async () => {
+    try {
+        await waitForDatabase();
+    } catch (error) {
+        logger.error("Failed to connect to database, exiting:", error);
+        process.exit(1);
+    }
+
+    try {
+        initializeJobs();
+    } catch (error) {
+        logger.error("Failed to initialize jobs:", error);
+    }
+
+    server = http.createServer(app);
+
+    initializeSocket(server);
+
+    server.listen(PORT, () => {
+        logger.info(`Server running on port ${PORT}`);
+    });
+};
+
+start();
 
 process.on("unhandledRejection", (reason) => {
     Sentry.captureException(reason);

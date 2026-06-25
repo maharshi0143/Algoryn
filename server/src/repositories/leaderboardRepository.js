@@ -36,11 +36,20 @@ const getGlobalLeaderboard = async (page = 1, limit = 50) => {
 };
 
 const getFriendsLeaderboard = async (userId) => {
-    return db("friends as f")
-        .join("users as u", db.raw("(CASE WHEN f.user_id = ? THEN f.friend_id ELSE f.user_id END) = u.id", [userId]))
-        .leftJoin("coding_profiles as cp", "cp.user_id", "u.id")
-        .leftJoin("problem_stats as ps", "ps.profile_id", "cp.id")
-        .leftJoin("github_stats as gs", "gs.profile_id", "cp.id")
+    const friendIds = await db("friends")
+        .where(function () {
+            this.where("user_id", userId).orWhere("friend_id", userId);
+        })
+        .where("status", "accepted")
+        .select(
+            db.raw("CASE WHEN user_id = ? THEN friend_id ELSE user_id END AS friend_id", [userId])
+        );
+
+    if (friendIds.length === 0) return [];
+
+    const ids = friendIds.map(r => r.friend_id);
+
+    return db("users as u")
         .select(
             "u.id",
             "u.name",
@@ -49,10 +58,10 @@ const getFriendsLeaderboard = async (userId) => {
             db.raw("COALESCE(MAX(ps.streak), 0) AS streak"),
             db.raw("COALESCE(SUM(gs.contributions), 0) AS contributions"),
         )
-        .where(function () {
-            this.where("f.user_id", userId).orWhere("f.friend_id", userId);
-        })
-        .where("f.status", "accepted")
+        .leftJoin("coding_profiles as cp", "cp.user_id", "u.id")
+        .leftJoin("problem_stats as ps", "ps.profile_id", "cp.id")
+        .leftJoin("github_stats as gs", "gs.profile_id", "cp.id")
+        .whereIn("u.id", ids)
         .groupBy("u.id", "u.name", "u.avatar")
         .orderBy("total_solved", "desc");
 };

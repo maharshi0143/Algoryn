@@ -1,7 +1,9 @@
 const { pool } = require("../config/db");
+const asyncHandler = require("../utils/asyncHandler");
+const apiResponse = require("../utils/apiResponse");
 const HTTP_STATUS = require("../constants/httpStatus");
 
-const health = async (req, res) => {
+const health = asyncHandler(async (req, res) => {
     const components = { database: { status: "unknown" } };
 
     try {
@@ -15,18 +17,18 @@ const health = async (req, res) => {
     }
 
     const allHealthy = Object.values(components).every(c => c.status === "ok");
-    const statusCode = allHealthy ? HTTP_STATUS.OK : HTTP_STATUS.SERVICE_UNAVAILABLE;
 
-    res.status(statusCode).json({
-        success: allHealthy,
-        data: {
+    apiResponse(
+        res,
+        allHealthy ? HTTP_STATUS.OK : HTTP_STATUS.SERVICE_UNAVAILABLE,
+        allHealthy ? "Server is running" : "One or more services are degraded",
+        {
             status: allHealthy ? "healthy" : "degraded",
             uptime: process.uptime(),
             timestamp: new Date().toISOString(),
             components,
-        },
-        message: allHealthy ? "Server is running" : "One or more services are degraded",
-    });
-};
+        }
+    );
+});
 
 module.exports = { health };

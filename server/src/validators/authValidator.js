@@ -13,7 +13,7 @@ const registerValidator = [
         .trim()
         .isEmail()
         .withMessage("Invalid email")
-        .normalizeEmail()
+        .normalizeEmail({ gmail_remove_dots: false })
         .custom((value) => {
             if (!value.endsWith("@gmail.com")) {
                 throw new Error("Only Gmail addresses (@gmail.com) are allowed");
@@ -36,7 +36,7 @@ const loginValidator = [
         .trim()
         .isEmail()
         .withMessage("Invalid email")
-        .normalizeEmail()
+        .normalizeEmail({ gmail_remove_dots: false })
         .custom((value) => {
             if (!value.endsWith("@gmail.com")) {
                 throw new Error("Only Gmail addresses (@gmail.com) are allowed");
