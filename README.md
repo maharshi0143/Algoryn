@@ -1,4 +1,4 @@
-# DevTrack AI — Developer Analytics Platform
+# Algoryn — Developer Analytics Platform
 
 Backend API that aggregates coding activity from GitHub, LeetCode, Codeforces, CodeChef, GFG, and HackerRank into a unified dashboard with AI-powered insights (Groq Llama 3.3), real-time notifications (Socket.IO), friend leaderboards, achievements, contest reminders, weekly reports, and data export (JSON/PDF/PNG).
 
@@ -1384,34 +1384,34 @@ Returns 404 with `{ success: false, message: "Route <originalUrl> not found" }`.
 
 ## Deployment
 
-### Railway (previous host)
+**Live URL:** [https://algoryn.onrender.com](https://algoryn.onrender.com)
 
-Root directory: `server/`. Build: `npm install`. Start: `npm start`.
+**Dashboard:** [https://dashboard.render.com](https://dashboard.render.com)
 
-### Render (recommended alternative)
+### Render (current host)
 
 1. Create a new Web Service, connect your GitHub repo
 2. Set **Root Directory** to `server/`
-3. Set **Build Command** to `npm install`
-4. Set **Start Command** to `npm start`
-5. Add environment variables in Render dashboard (see [Environment Variables](#environment-variables))
-6. Set `NODE_ENV=production` explicitly
-7. Set health check path to `/api/health`
+3. Render auto-detects the **Dockerfile** — build and start are automatic
+4. Add environment variables in Render dashboard (see [Environment Variables](#environment-variables))
+5. Set `NODE_ENV=production` explicitly
+6. Set health check path to `/api/health`
 
 **Note:** Render's free tier sleeps after 15 minutes of inactivity. Cron jobs won't run while sleeping. Use an uptime monitor (e.g., UptimeRobot, pinging every 5 minutes) to keep the service awake.
 
-### Docker
+### Local Docker
 
 ```bash
-docker build -t devtrack-server .
-docker run -p 5000:5000 --env-file .env.production devtrack-server
+cd server
+docker build -t algoryn-server .
+docker run -p 5000:5000 --env-file .env.production algoryn-server
 ```
 
 ### Environment File Loading
 
 The app loads `server/.env.<NODE_ENV>` on startup:
 - Development: `server/.env.development`
-- Production: `server/.env.production`
+- Production: `server/.env.production` (Render injects these via dashboard — no file needed)
 - Test: `server/.env.test`
 
 NODE_ENV defaults to `"development"` if not set.
