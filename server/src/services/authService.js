@@ -57,7 +57,7 @@ const registerUser = async (name, email, password) => {
     const verificationUrl = `${frontendUrl}/verify-email?token=${token}`;
 
     try {
-        await sendVerificationEmail(
+        sendVerificationEmail(
             user.email,
             user.name,
             verificationUrl
