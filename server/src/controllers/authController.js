@@ -29,20 +29,6 @@ const register = asyncHandler(async (req, res) => {
     );
 });
 
-// Verify email
-const verifyEmail = asyncHandler(async (req, res) => {
-    const { token } = req.query;
-
-    const data = await authService.verifyEmail(token);
-
-    apiResponse(
-        res,
-        HTTP_STATUS.OK,
-        "Email verified successfully",
-        data
-    );
-});
-
 // Login with email and password
 const login = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
@@ -146,23 +132,12 @@ const deleteAccount = asyncHandler(async (req, res) => {
     );
 });
 
-// Resend verification email
-const resendVerification = asyncHandler(async (req, res) => {
-    const { email } = req.body;
-
-    const data = await authService.resendVerificationEmail(email);
-
-    apiResponse(res, HTTP_STATUS.OK, "Verification email sent.", data);
-});
-
 module.exports = {
     register,
-    verifyEmail,
     login,
     logout,
     me,
     refreshToken,
     changePassword,
     deleteAccount,
-    resendVerification,
 };

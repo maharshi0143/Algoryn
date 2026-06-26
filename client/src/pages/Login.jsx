@@ -5,7 +5,6 @@ import toast from "react-hot-toast";
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
 import useAuthStore from "../store/authStore";
-import { authService } from "../services/authService";
 import { ROUTES } from "../constants/routes";
 
 function MailIcon() {
@@ -48,7 +47,6 @@ function Login() {
   const [touched, setTouched] = useState({});
   const [loginError, setLoginError] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [resending, setResending] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -89,18 +87,6 @@ function Login() {
       toast.error(message);
     } finally {
       setIsLoggingIn(false);
-    }
-  };
-
-  const handleResend = async () => {
-    setResending(true);
-    try {
-      await authService.resendVerification(form.email);
-      toast.success("Verification email sent! Check spam too.");
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to resend");
-    } finally {
-      setResending(false);
     }
   };
 
@@ -191,19 +177,6 @@ function Login() {
           Login ⚡
         </Button>
       </form>
-
-      {loginError === "Please verify your email before logging in." && (
-        <div style={{ textAlign: "center", marginTop: "16px" }}>
-          <Button
-            variant="secondary"
-            size="md"
-            onClick={handleResend}
-            loading={resending}
-          >
-            Resend Verification Email
-          </Button>
-        </div>
-      )}
 
       <p
         style={{

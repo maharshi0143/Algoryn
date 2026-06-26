@@ -9,7 +9,6 @@ import ErrorBoundary from "../components/common/ErrorBoundary";
 const Landing = lazy(() => import("../pages/Landing"));
 const Login = lazy(() => import("../pages/Login"));
 const Register = lazy(() => import("../pages/Register"));
-const VerifyEmail = lazy(() => import("../pages/VerifyEmail"));
 const Welcome = lazy(() => import("../pages/Welcome"));
 const Intro = lazy(() => import("../pages/Intro"));
 const Connect = lazy(() => import("../pages/Connect"));
@@ -28,7 +27,6 @@ function AppRoutes() {
           <Route element={<AuthLayout />}>
             <Route path={ROUTES.login} element={<Login />} />
             <Route path={ROUTES.register} element={<Register />} />
-            <Route path={ROUTES.verifyEmail} element={<VerifyEmail />} />
           </Route>
 
           {/* Onboarding */}

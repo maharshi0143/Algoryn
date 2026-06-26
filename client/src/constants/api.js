@@ -7,8 +7,7 @@ export const ENDPOINTS = {
   logout: "/auth/logout",
   me: "/auth/me",
   refreshToken: "/auth/refresh-token",
-  verifyEmail: "/auth/verify-email",
-  resendVerification: "/auth/resend-verification",
+
 
   // Profiles
   profiles: "/profiles",

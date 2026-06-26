@@ -12,9 +12,11 @@ export function useAuth() {
   const registerMutation = useMutation({
     mutationFn: ({ name, email, password }) =>
       authService.register(name, email, password),
-    onSuccess: () => {
-      toast.success("Registration successful! Check your email to verify.");
-      navigate(ROUTES.login);
+    onSuccess: (res) => {
+      const { user: userData, accessToken } = res.data.data;
+      login(userData, accessToken);
+      toast.success(`Welcome, ${userData.name}!`);
+      navigate(ROUTES.welcome);
     },
     onError: (error) => {
       const message =

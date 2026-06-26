@@ -1,6 +1,5 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
 
 const ApiError = require("../utils/ApiError");
 const HTTP_STATUS = require("../constants/httpStatus");
@@ -8,14 +7,10 @@ const logger = require("../utils/logger");
 
 const generateAccessToken = require("../utils/generateAccessToken");
 const generateRefreshToken = require("../utils/generateRefreshToken");
-const { generateVerificationToken } = require("../utils/verificationToken");
-const { sendVerificationEmail } = require("./emailService");
-
 
 const userRepository = require("../repositories/userRepository");
 const refreshTokenRepository = require("../repositories/refreshTokenRepository");
 
-// Register a new user and return tokens
 const registerUser = async (name, email, password) => {
     const existingUser = await userRepository.findUserByEmail(email);
 
@@ -25,19 +20,7 @@ const registerUser = async (name, email, password) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const {
-        token,
-        tokenHash,
-        expiresAt: verificationTokenExpiresAt,
-    } = generateVerificationToken();
-
-    const user = await userRepository.createUser(
-        name,
-        email,
-        hashedPassword,
-        tokenHash,
-        verificationTokenExpiresAt
-    );
+    const user = await userRepository.createUser(name, email, hashedPassword);
 
     const accessToken = generateAccessToken({
         userId: user.id,
@@ -53,21 +36,6 @@ const registerUser = async (name, email, password) => {
 
     await refreshTokenRepository.saveRefreshToken(user.id, refreshToken, expiresAt);
 
-    const frontendUrl = process.env.CLIENT_URL?.split(",")[0]?.trim() || "http://localhost:5173";
-    const verificationUrl = `${frontendUrl}/verify-email?token=${token}`;
-
-    try {
-        sendVerificationEmail(
-            user.email,
-            user.name,
-            verificationUrl
-        );
-    } catch (err) {
-        logger.error(`Failed to send verification email to ${user.email}: ${err.message}`);
-    }
-
-    logger.info(`[DEV FALLBACK] Verification URL for ${user.email}: ${verificationUrl}`);
-
     return {
         user: {
             id: user.id,
@@ -79,7 +47,6 @@ const registerUser = async (name, email, password) => {
     };
 };
 
-// Login with email and password, return tokens
 const loginUser = async (email, password) => {
     const user = await userRepository.findUserByEmail(email);
 
@@ -93,13 +60,6 @@ const loginUser = async (email, password) => {
         throw new ApiError(HTTP_STATUS.UNAUTHORIZED, "Invalid credentials");
     }
 
-    if (!user.is_verified) {
-        throw new ApiError(
-            HTTP_STATUS.FORBIDDEN,
-            "Please verify your email before logging in."
-        );
-    }
-
     const accessToken = generateAccessToken({
         userId: user.id,
         email: user.email,
@@ -125,12 +85,10 @@ const loginUser = async (email, password) => {
     };
 };
 
-// Logout by deleting the refresh token
 const logoutUser = async (refreshToken) => {
     await refreshTokenRepository.deleteRefreshToken(refreshToken);
 };
 
-// Get the currently authenticated user's details
 const getCurrentUser = async (userId) => {
     const user = await userRepository.findUserById(userId);
 
@@ -141,7 +99,6 @@ const getCurrentUser = async (userId) => {
     return user;
 };
 
-// Rotate refresh token and issue a new access token
 const refreshUserToken = async (refreshToken) => {
     const storedToken = await refreshTokenRepository.findRefreshToken(refreshToken);
 
@@ -204,58 +161,6 @@ const deleteAccount = async (userId) => {
     await userRepository.deleteUser(userId);
 };
 
-const verifyEmail = async (token) => {
-    const tokenHash = crypto
-        .createHash("sha256")
-        .update(token)
-        .digest("hex");
-
-    const user = await userRepository.findUserByVerificationTokenHash(
-        tokenHash
-    );
-
-    if (!user) {
-        throw new ApiError(
-            HTTP_STATUS.BAD_REQUEST,
-            "Invalid or expired verification link."
-        );
-    }
-
-    await userRepository.verifyUserEmail(user.id);
-
-    return {
-        message: "Email verified successfully.",
-    };
-};
-
-const resendVerificationEmail = async (email) => {
-    const user = await userRepository.findUserByEmail(email);
-
-    if (!user) {
-        throw new ApiError(HTTP_STATUS.NOT_FOUND, "No account found with this email.");
-    }
-
-    if (user.is_verified) {
-        throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Email is already verified.");
-    }
-
-    const { token, tokenHash, expiresAt } = generateVerificationToken();
-    await userRepository.updateVerificationToken(user.id, tokenHash, expiresAt);
-
-    const frontendUrl = process.env.CLIENT_URL?.split(",")[0]?.trim() || "http://localhost:5173";
-    const verificationUrl = `${frontendUrl}/verify-email?token=${token}`;
-
-    try {
-        sendVerificationEmail(user.email, user.name, verificationUrl);
-    } catch (err) {
-        logger.error(`Failed to resend verification email to ${user.email}: ${err.message}`);
-    }
-
-    logger.info(`[DEV FALLBACK] Verification URL for ${user.email}: ${verificationUrl}`);
-
-    return { message: "Verification email sent." };
-};
-
 module.exports = {
     registerUser,
     loginUser,
@@ -264,6 +169,4 @@ module.exports = {
     refreshUserToken,
     changePassword,
     deleteAccount,
-    verifyEmail,
-    resendVerificationEmail,
 };

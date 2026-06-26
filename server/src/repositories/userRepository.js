@@ -6,18 +6,6 @@ const findUserByEmail = async (email) => {
     return result.rows[0];
 };
 
-// Find a user by verification token hash
-const findUserByVerificationTokenHash = async (tokenHash) => {
-    const result = await db.query(
-        `SELECT * FROM users
-         WHERE verification_token_hash = $1
-         AND verification_token_expires_at > NOW()`,
-        [tokenHash]
-    );
-
-    return result.rows[0];
-};
-
 // Find a user by their ID (excludes sensitive fields)
 const findUserById = async (id) => {
     const result = await db.query(
@@ -27,77 +15,15 @@ const findUserById = async (id) => {
     return result.rows[0];
 };
 
-// Create a new user
-const createUser = async (
-    name,
-    email,
-    password,
-    verificationTokenHash,
-    verificationTokenExpiresAt
-) => {
+// Create a new user (auto-verified, no email verification needed)
+const createUser = async (name, email, password) => {
     const result = await db.query(
         `
-        INSERT INTO users (
-            name,
-            email,
-            password,
-            is_verified,
-            verification_token_hash,
-            verification_token_expires_at
-        )
-        VALUES ($1, $2, $3, FALSE, $4, $5)
+        INSERT INTO users (name, email, password, is_verified)
+        VALUES ($1, $2, $3, TRUE)
         RETURNING *
         `,
-        [
-            name,
-            email,
-            password,
-            verificationTokenHash,
-            verificationTokenExpiresAt,
-        ]
-    );
-
-    return result.rows[0];
-};
-
-// Mark email as verified
-const verifyUserEmail = async (userId) => {
-    const result = await db.query(
-        `
-        UPDATE users
-        SET
-            is_verified = TRUE,
-            verification_token_hash = NULL,
-            verification_token_expires_at = NULL
-        WHERE id = $1
-        RETURNING *
-        `,
-        [userId]
-    );
-
-    return result.rows[0];
-};
-
-// Update verification token
-const updateVerificationToken = async (
-    userId,
-    verificationTokenHash,
-    verificationTokenExpiresAt
-) => {
-    const result = await db.query(
-        `
-        UPDATE users
-        SET
-            verification_token_hash = $1,
-            verification_token_expires_at = $2
-        WHERE id = $3
-        RETURNING *
-        `,
-        [
-            verificationTokenHash,
-            verificationTokenExpiresAt,
-            userId,
-        ]
+        [name, email, password]
     );
 
     return result.rows[0];
@@ -136,12 +62,9 @@ const findUserByIdForAuth = async (id) => {
 
 module.exports = {
     findUserByEmail,
-    findUserByVerificationTokenHash,
     findUserById,
     findUserByIdForAuth,
     createUser,
-    verifyUserEmail,
-    updateVerificationToken,
     findAllUsers,
     updatePassword,
     deleteUser,
