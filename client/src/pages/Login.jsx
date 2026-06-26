@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
 import useAuthStore from "../store/authStore";
+import { authService } from "../services/authService";
 import { ROUTES } from "../constants/routes";
 
 function MailIcon() {

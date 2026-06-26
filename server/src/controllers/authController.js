@@ -24,7 +24,7 @@ const register = asyncHandler(async (req, res) => {
     apiResponse(
         res,
         HTTP_STATUS.CREATED,
-        "Registration successful. Please verify your email.",
+        "Registration successful.",
         data
     );
 });
