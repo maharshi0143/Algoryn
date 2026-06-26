@@ -7,6 +7,7 @@ const {
     changePasswordValidator,
 } = require("../validators/authValidator");
 
+const { body } = require("express-validator");
 const { protect } = require("../middlewares/authMiddleware");
 const validate = require("../middlewares/validate");
 const authLimiter = require("../middlewares/authLimiter");
@@ -30,6 +31,15 @@ router.post(
 router.get(
     "/verify-email",
     authController.verifyEmail
+);
+
+// Resend Verification Email
+router.post(
+    "/resend-verification",
+    authLimiter,
+    body("email").trim().isEmail().withMessage("Invalid email"),
+    validate,
+    authController.resendVerification
 );
 
 // Login

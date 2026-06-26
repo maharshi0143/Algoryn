@@ -228,6 +228,34 @@ const verifyEmail = async (token) => {
     };
 };
 
+const resendVerificationEmail = async (email) => {
+    const user = await userRepository.findUserByEmail(email);
+
+    if (!user) {
+        throw new ApiError(HTTP_STATUS.NOT_FOUND, "No account found with this email.");
+    }
+
+    if (user.is_verified) {
+        throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Email is already verified.");
+    }
+
+    const { token, tokenHash, expiresAt } = generateVerificationToken();
+    await userRepository.updateVerificationToken(user.id, tokenHash, expiresAt);
+
+    const frontendUrl = process.env.CLIENT_URL?.split(",")[0]?.trim() || "http://localhost:5173";
+    const verificationUrl = `${frontendUrl}/verify-email?token=${token}`;
+
+    try {
+        sendVerificationEmail(user.email, user.name, verificationUrl);
+    } catch (err) {
+        logger.error(`Failed to resend verification email to ${user.email}: ${err.message}`);
+    }
+
+    logger.info(`[DEV FALLBACK] Verification URL for ${user.email}: ${verificationUrl}`);
+
+    return { message: "Verification email sent." };
+};
+
 module.exports = {
     registerUser,
     loginUser,
@@ -236,5 +264,6 @@ module.exports = {
     refreshUserToken,
     changePassword,
     deleteAccount,
-    verifyEmail
+    verifyEmail,
+    resendVerificationEmail,
 };

@@ -1,5 +1,12 @@
+const path = require("path");
+const fs = require("fs");
 const activeEnv = process.env.NODE_ENV || "development";
-require("dotenv").config({ path: require("path").resolve(__dirname, "..", `.env.${activeEnv}`) });
+const envPath = path.resolve(__dirname, "..", `.env.${activeEnv}`);
+if (fs.existsSync(envPath)) {
+    require("dotenv").config({ path: envPath });
+} else {
+    require("dotenv").config({ path: path.resolve(__dirname, "..", ".env") });
+}
 
 const http = require("http");
 const Sentry = require("@sentry/node");

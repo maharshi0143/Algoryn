@@ -146,6 +146,15 @@ const deleteAccount = asyncHandler(async (req, res) => {
     );
 });
 
+// Resend verification email
+const resendVerification = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+
+    const data = await authService.resendVerificationEmail(email);
+
+    apiResponse(res, HTTP_STATUS.OK, "Verification email sent.", data);
+});
+
 module.exports = {
     register,
     verifyEmail,
@@ -155,4 +164,5 @@ module.exports = {
     refreshToken,
     changePassword,
     deleteAccount,
+    resendVerification,
 };

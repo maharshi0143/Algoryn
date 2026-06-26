@@ -11,6 +11,7 @@ import { ROUTES } from "../../constants/routes";
 function Connect() {
   const navigate = useNavigate();
   const nextStep = useUIStore((state) => state.nextOnboardingStep);
+  const prevStep = useUIStore((state) => state.prevOnboardingStep);
   const [usernames, setUsernames] = useState({});
   const [connected, setConnected] = useState(new Set());
   const [connecting, setConnecting] = useState(null);
@@ -37,6 +38,11 @@ function Connect() {
     } finally {
       setConnecting(null);
     }
+  };
+
+  const handlePrev = () => {
+    prevStep();
+    navigate(ROUTES.intro);
   };
 
   const handleContinue = () => {
@@ -97,8 +103,8 @@ function Connect() {
                 padding: "12px 16px",
               }}
             >
-              <span style={{ fontSize: "20px", lineHeight: 1 }}>
-                {platform.icon}
+              <span style={{ fontSize: "20px", lineHeight: 1, color: platform.color, display: "inline-flex" }}>
+                <platform.icon />
               </span>
               <span
                 style={{
@@ -162,7 +168,10 @@ function Connect() {
         })}
       </div>
 
-      <div style={{ textAlign: "center", marginTop: "24px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginTop: "24px" }}>
+        <Button variant="secondary" size="lg" onClick={handlePrev}>
+          ← Prev
+        </Button>
         <Button
           size="lg"
           onClick={handleContinue}

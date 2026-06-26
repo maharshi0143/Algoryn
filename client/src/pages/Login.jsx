@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import toast from "react-hot-toast";
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
-import { useAuth } from "../hooks/useAuth";
+import useAuthStore from "../store/authStore";
+import { authService } from "../services/authService";
 import { ROUTES } from "../constants/routes";
 
 function MailIcon() {
@@ -39,14 +41,19 @@ function validate(field, value) {
 }
 
 function Login() {
-  const { login, isLoggingIn } = useAuth();
+  const navigate = useNavigate();
+  const storeLogin = useAuthStore((state) => state.login);
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
+  const [loginError, setLoginError] = useState(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [resending, setResending] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+    if (loginError) setLoginError(null);
     if (touched[name]) {
       setErrors((prev) => ({ ...prev, [name]: validate(name, value) }));
     }
@@ -58,8 +65,9 @@ function Login() {
     setErrors((prev) => ({ ...prev, [name]: validate(name, value) }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoginError(null);
     const newErrors = {
       email: validate("email", form.email),
       password: validate("password", form.password),
@@ -67,7 +75,33 @@ function Login() {
     setErrors(newErrors);
     setTouched({ email: true, password: true });
     if (Object.values(newErrors).some(Boolean)) return;
-    login({ email: form.email.trim(), password: form.password });
+
+    setIsLoggingIn(true);
+    try {
+      const res = await authService.login(form.email.trim(), form.password);
+      const { user, accessToken } = res.data.data;
+      storeLogin(user, accessToken);
+      toast.success(`Welcome back, ${user.name}!`);
+      navigate(ROUTES.welcome);
+    } catch (err) {
+      const message = err.response?.data?.message || "Login failed";
+      setLoginError(message);
+      toast.error(message);
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setResending(true);
+    try {
+      await authService.resendVerification(form.email);
+      toast.success("Verification email sent! Check spam too.");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to resend");
+    } finally {
+      setResending(false);
+    }
   };
 
   return (
@@ -158,10 +192,23 @@ function Login() {
         </Button>
       </form>
 
+      {loginError === "Please verify your email before logging in." && (
+        <div style={{ textAlign: "center", marginTop: "16px" }}>
+          <Button
+            variant="secondary"
+            size="md"
+            onClick={handleResend}
+            loading={resending}
+          >
+            Resend Verification Email
+          </Button>
+        </div>
+      )}
+
       <p
         style={{
           textAlign: "center",
-          margin: "24px 0 0",
+          margin: "16px 0 0",
           fontFamily: "var(--font-body)",
           fontSize: "14px",
           color: "#666",

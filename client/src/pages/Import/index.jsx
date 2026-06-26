@@ -20,6 +20,7 @@ function Import() {
   const mounted = useRef(true);
 
   useEffect(() => {
+    mounted.current = true;
     let timers = [];
 
     const run = async () => {

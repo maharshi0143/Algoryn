@@ -37,10 +37,16 @@ const cardVariants = {
 function Intro() {
   const navigate = useNavigate();
   const nextStep = useUIStore((state) => state.nextOnboardingStep);
+  const prevStep = useUIStore((state) => state.prevOnboardingStep);
 
   const handleContinue = () => {
     nextStep();
     navigate(ROUTES.connect);
+  };
+
+  const handlePrev = () => {
+    prevStep();
+    navigate(ROUTES.welcome);
   };
 
   return (
@@ -115,7 +121,10 @@ function Intro() {
         </motion.div>
       ))}
 
-      <div style={{ textAlign: "center", marginTop: "8px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginTop: "8px" }}>
+        <Button variant="secondary" size="lg" onClick={handlePrev}>
+          ← Prev
+        </Button>
         <Button size="lg" onClick={handleContinue}>
           Continue →
         </Button>

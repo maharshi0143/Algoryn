@@ -14,6 +14,9 @@ export const authService = {
 
   refreshToken: () => api.post(ENDPOINTS.refreshToken),
 
+  resendVerification: (email) =>
+    api.post(ENDPOINTS.resendVerification, { email }),
+
   verifyEmail: (token) =>
     api.get(ENDPOINTS.verifyEmail, { params: { token } }),
 
