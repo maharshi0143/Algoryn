@@ -53,7 +53,8 @@ const registerUser = async (name, email, password) => {
 
     await refreshTokenRepository.saveRefreshToken(user.id, refreshToken, expiresAt);
 
-    const verificationUrl = `http://localhost:5000/api/auth/verify-email?token=${token}`;
+    const frontendUrl = process.env.CLIENT_URL?.split(",")[0]?.trim() || "http://localhost:5173";
+    const verificationUrl = `${frontendUrl}/verify-email?token=${token}`;
 
     try {
         await sendVerificationEmail(

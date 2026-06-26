@@ -1,0 +1,16 @@
+export const ROUTES = {
+  landing: "/",
+  login: "/login",
+  register: "/register",
+  verifyEmail: "/verify-email",
+  welcome: "/welcome",
+  intro: "/intro",
+  connect: "/connect",
+  import: "/import",
+  dashboard: "/dashboard",
+  analytics: "/analytics",
+  leaderboard: "/leaderboard",
+  contests: "/contests",
+  profile: "/profile",
+  settings: "/settings",
+};
