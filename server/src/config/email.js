@@ -1,20 +1,12 @@
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 const logger = require("../utils/logger");
 
-let transporter;
+let resend;
 
-if (process.env.SMTP_USER) {
-    transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST || "smtp.gmail.com",
-        port: parseInt(process.env.SMTP_PORT) || 587,
-        secure: process.env.SMTP_SECURE === "true",
-        auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
-        },
-    });
+if (process.env.RESEND_API_KEY) {
+    resend = new Resend(process.env.RESEND_API_KEY);
 } else {
-    transporter = { sendMail: async () => logger.info("SMTP not configured: email skipped") };
+    resend = { emails: { send: async () => logger.info("Resend not configured: email skipped") } };
 }
 
-module.exports = transporter;
+module.exports = resend;

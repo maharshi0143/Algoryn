@@ -66,6 +66,8 @@ const registerUser = async (name, email, password) => {
         logger.error(`Failed to send verification email to ${user.email}: ${err.message}`);
     }
 
+    logger.info(`[DEV FALLBACK] Verification URL for ${user.email}: ${verificationUrl}`);
+
     return {
         user: {
             id: user.id,

@@ -1,16 +1,18 @@
-const transporter = require("../config/email");
+const resend = require("../config/email");
 const logger = require("../utils/logger");
 const verifyEmailTemplate = require("../templates/verifyEmailTemplate");
 
+const FROM = process.env.RESEND_FROM || "Algoryn <onboarding@resend.dev>";
+
 const sendEmail = async ({ to, subject, text, html }) => {
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-        logger.info(`Email not sent — SMTP not configured (would send to ${to}: ${subject})`);
+    if (!process.env.RESEND_API_KEY) {
+        logger.info(`Email not sent — Resend not configured (would send to ${to}: ${subject})`);
         return;
     }
 
     try {
-        await transporter.sendMail({
-            from: process.env.SMTP_FROM || `"Algoryn" <${process.env.SMTP_USER}>`,
+        await resend.emails.send({
+            from: FROM,
             to,
             subject,
             text,
