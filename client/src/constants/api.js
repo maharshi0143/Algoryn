@@ -22,6 +22,7 @@ export const ENDPOINTS = {
   dashboard: "/dashboard",
   dashboardStats: "/dashboard",
   dashboardHeatmap: "/dashboard/heatmap",
+  dashboardWeekly: "/dashboard/weekly",
 
   // Analytics
   analytics: "/analytics",
@@ -70,6 +71,9 @@ export const ENDPOINTS = {
 
   // Email Preferences
   emailPreferences: "/email-preferences",
+
+  // Activity
+  activityLogs: "/activity-logs",
 
   // Health
   health: "/health",

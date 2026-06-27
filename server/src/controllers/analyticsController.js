@@ -33,9 +33,17 @@ const getYearlyProgress = asyncHandler(async (req, res) => {
     apiResponse(res, HTTP_STATUS.OK, "Yearly progress fetched successfully", data);
 });
 
+// Get language distribution from GitHub stats
+const getLanguageDistribution = asyncHandler(async (req, res) => {
+    const data = await analyticsService.getLanguageDistribution(req.user.id);
+
+    apiResponse(res, HTTP_STATUS.OK, "Language distribution fetched successfully", data);
+});
+
 module.exports = {
     getPlatformComparison,
     getDifficultyDistribution,
     getContributionTrend,
     getYearlyProgress,
+    getLanguageDistribution,
 };

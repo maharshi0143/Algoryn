@@ -26,9 +26,15 @@ const getYearlyProgress = async (userId) => {
     return await analyticsRepository.getYearlyProgress(userId);
 };
 
+// Get language distribution from GitHub
+const getLanguageDistribution = async (userId) => {
+    return await analyticsRepository.getLanguageDistribution(userId);
+};
+
 module.exports = {
     getPlatformComparison,
     getDifficultyDistribution,
     getContributionTrend,
     getYearlyProgress,
+    getLanguageDistribution,
 };

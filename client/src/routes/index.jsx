@@ -14,6 +14,7 @@ const Intro = lazy(() => import("../pages/Intro"));
 const Connect = lazy(() => import("../pages/Connect"));
 const Import = lazy(() => import("../pages/Import"));
 const Dashboard = lazy(() => import("../pages/Dashboard"));
+const Analytics = lazy(() => import("../pages/Analytics"));
 
 function AppRoutes() {
   return (
@@ -52,6 +53,7 @@ function AppRoutes() {
             }
           >
             <Route path={ROUTES.dashboard} element={<Dashboard />} />
+            <Route path={ROUTES.analytics} element={<Analytics />} />
           </Route>
 
           {/* Fallback */}

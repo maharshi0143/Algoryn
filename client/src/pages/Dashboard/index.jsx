@@ -2,16 +2,23 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { format, parseISO } from "date-fns";
+import toast from "react-hot-toast";
+import useAuthStore from "../../store/authStore";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
-import { dashboardService } from "../../services/dashboardService";
+import Skeleton from "../../components/ui/Skeleton";
+import { dashboardService, DASHBOARD_QUERY_KEY } from "../../services/dashboardService";
+import { contestService } from "../../services/contestService";
+
+import { platformService } from "../../services/platformService";
+import { activityLogService } from "../../services/activityLogService";
 import { ROUTES } from "../../constants/routes";
 import {
-  SolvedIcon, EasyIcon, MediumIcon, HardIcon,
   StreakIcon, RepoIcon, FollowersIcon, ContributionsIcon,
 } from "./DashboardIcons";
 
-function AnimatedNumber({ value }) {
+function AnimatedNumber({ value, suffix = "" }) {
   const [display, setDisplay] = useState(0);
 
   useEffect(() => {
@@ -28,35 +35,293 @@ function AnimatedNumber({ value }) {
     return () => clearInterval(timer);
   }, [value]);
 
-  return <span>{display}</span>;
+  return <span>{display}{suffix}</span>;
 }
 
-function useMediaQuery(query) {
-  const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
-  useEffect(() => {
-    const mq = window.matchMedia(query);
-    const handler = (e) => setMatches(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, [query]);
-  return matches;
+function GreetingBanner({ name, onSync, syncing }) {
+  const hour = new Date().getHours();
+  let greeting = "Good Evening";
+  let emoji = "🌙";
+  if (hour < 12) { greeting = "Good Morning"; emoji = "🔥"; }
+  else if (hour < 17) { greeting = "Good Afternoon"; emoji = "☀️"; }
+
+  return (
+    <div style={{
+      display: "flex", justifyContent: "space-between", alignItems: "center",
+      marginBottom: "16px", flexWrap: "wrap", gap: "12px",
+    }}>
+      <h1 style={{
+        fontFamily: "var(--font-heading)", fontWeight: 700,
+        fontSize: "26px", margin: 0, color: "var(--color-dark)",
+      }}>
+        {emoji} {greeting}, {name}
+      </h1>
+      <Button
+        size="sm"
+        loading={syncing}
+        onClick={onSync}
+        style={{ whiteSpace: "nowrap" }}
+      >
+        ⟳ Sync Now
+      </Button>
+    </div>
+  );
 }
 
-const STATS_CONFIG = [
-  { key: "totalSolved",   label: "Total Solved",  icon: <SolvedIcon />,         color: "#FFD93D", section: "problems" },
-  { key: "easy",          label: "Easy",           icon: <EasyIcon />,           color: "#6BCB77", section: "problems" },
-  { key: "medium",        label: "Medium",         icon: <MediumIcon />,         color: "#FF9F43", section: "problems" },
-  { key: "hard",          label: "Hard",           icon: <HardIcon />,           color: "#FF4757", section: "problems" },
-  { key: "streak",        label: "Streak",          icon: <StreakIcon />,        color: "#FF6B35", section: "github" },
-  { key: "repositories",  label: "Repositories",    icon: <RepoIcon />,          color: "#4D96FF", section: "github" },
-  { key: "followers",     label: "Followers",       icon: <FollowersIcon />,     color: "#A855F7", section: "github" },
-  { key: "contributions", label: "Contributions",   icon: <ContributionsIcon />, color: "#14B8A6", section: "github" },
-];
+function AIMiniWidget() {
+  return (
+    <Card padding="md" style={{
+      marginBottom: "24px",
+      background: "linear-gradient(135deg, #FFF3CD 0%, #FFE5A0 100%)",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <span style={{ fontSize: "28px" }}>🧠</span>
+        <div style={{ flex: 1 }}>
+          <p style={{
+            fontFamily: "var(--font-heading)", fontWeight: 700,
+            fontSize: "15px", margin: "0 0 2px", color: "var(--color-dark)",
+          }}>
+            Today&apos;s Mission
+          </p>
+          <p style={{
+            fontFamily: "var(--font-body)", fontSize: "13px",
+            margin: 0, color: "#665",
+          }}>
+            Solve 2 Graph problems  <span style={{
+              fontFamily: "var(--font-mono)", fontWeight: 600,
+              color: "#6BCB77", fontSize: "14px",
+            }}>+250 XP</span>
+          </p>
+        </div>
+        <div style={{
+          background: "#6BCB77", color: "#fff",
+          borderRadius: "12px", padding: "8px 16px",
+          fontFamily: "var(--font-heading)", fontWeight: 700,
+          fontSize: "12px", border: "2px solid #000",
+          whiteSpace: "nowrap", cursor: "pointer",
+        }}>
+          Claim XP →
+        </div>
+      </div>
+    </Card>
+  );
+}
 
-const SECTIONS = [
-  { key: "problems", label: "Problems" },
-  { key: "github",   label: "GitHub & Streak" },
-];
+function StatCard({ icon, value, label, color, suffix = "" }) {
+  return (
+    <Card padding="md">
+      <div style={{
+        display: "flex", flexDirection: "column", alignItems: "center",
+        gap: "8px", textAlign: "center",
+      }}>
+        <div style={{ color, fontSize: "24px", lineHeight: 1, display: "inline-flex" }}>
+          {icon}
+        </div>
+        <span style={{
+          fontFamily: "var(--font-heading)", fontWeight: 700,
+          fontSize: "30px", lineHeight: 1, color,
+        }}>
+          <AnimatedNumber value={value} suffix={suffix} />
+        </span>
+        <span style={{
+          fontFamily: "var(--font-body)", fontSize: "13px",
+          color: "#888", lineHeight: 1.2,
+        }}>
+          {label}
+        </span>
+      </div>
+    </Card>
+  );
+}
+
+function XPIcon() {
+  return (
+    <svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+      <path d="M12 2L15 9L22 9.5L17 14L18.5 21L12 17L5.5 21L7 14L2 9.5L9 9L12 2Z" fill="#FFD93D" stroke="#000" strokeWidth="1.5" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+function LevelIcon() {
+  return (
+    <svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+      <rect x="3" y="11" width="4" height="10" rx="1" fill="#4D96FF" stroke="#000" strokeWidth="1.5"/>
+      <rect x="10" y="7" width="4" height="14" rx="1" fill="#4D96FF" stroke="#000" strokeWidth="1.5"/>
+      <rect x="17" y="3" width="4" height="18" rx="1" fill="#4D96FF" stroke="#000" strokeWidth="1.5"/>
+    </svg>
+  );
+}
+
+function FlameIcon() {
+  return (
+    <svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+      <path d="M12 2s-4 5-4 8a4 4 0 0 0 8 0c0-3-4-8-4-8z" fill="#FF6B35" stroke="#000" strokeWidth="1.5"/>
+      <circle cx="12" cy="10" r="2" fill="#FF6B35" stroke="#000" strokeWidth="1"/>
+    </svg>
+  );
+}
+
+function ProblemsIcon() {
+  return (
+    <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#A855F7" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <polyline points="16 8 10 16 8 12"/>
+    </svg>
+  );
+}
+
+function LevelBadge({ level }) {
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", justifyContent: "center",
+      gap: "4px",
+      background: "linear-gradient(135deg, #FFD93D, #FF9F43)",
+      borderRadius: "12px", border: "2px solid #000",
+      padding: "4px 14px",
+      fontFamily: "var(--font-heading)", fontWeight: 700,
+      fontSize: "13px", color: "#121212",
+    }}>
+      <span style={{ fontSize: "16px" }}>⭐</span>
+      Lvl {level}
+    </div>
+  );
+}
+
+function ActivityFeed({ activities }) {
+  if (!activities || activities.length === 0) {
+    return (
+      <div style={{
+        textAlign: "center", padding: "24px 0",
+        fontFamily: "var(--font-body)", fontSize: "13px", color: "#aaa",
+      }}>
+        No recent activity yet
+      </div>
+    );
+  }
+
+  const actionIcons = {
+    sync_github: "🐙",
+    sync_leetcode: "💻",
+    sync_codeforces: "⚡",
+    sync_codechef: "🍴",
+    sync_gfg: "📚",
+    sync_hackerrank: "🏴",
+    profile_connected: "🔗",
+    achievement_unlocked: "🏆",
+    default: "📌",
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+      {activities.map((act, i) => (
+        <motion.div
+          key={act.id || i}
+          initial={{ opacity: 0, x: -12 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: i * 0.05, duration: 0.3 }}
+          style={{
+            display: "flex", alignItems: "center", gap: "10px",
+            padding: "8px 12px",
+            background: "#F8F8F8",
+            borderRadius: "12px", border: "2px solid #E8E8E8",
+          }}
+        >
+          <span style={{ fontSize: "18px" }}>
+            {actionIcons[act.action] || actionIcons.default}
+          </span>
+          <span style={{
+            fontFamily: "var(--font-body)", fontSize: "13px", flex: 1,
+            color: "#444",
+          }}>
+            {act.metadata?.description || act.action}
+          </span>
+          <span style={{
+            fontFamily: "var(--font-mono)", fontSize: "11px", color: "#aaa",
+            whiteSpace: "nowrap",
+          }}>
+            {act.created_at ? format(parseISO(act.created_at), "MMM d, HH:mm") : ""}
+          </span>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+function UpcomingContestsCard({ contests }) {
+  if (!contests || contests.length === 0) {
+    return (
+      <div style={{
+        textAlign: "center", padding: "24px 0",
+        fontFamily: "var(--font-body)", fontSize: "13px", color: "#aaa",
+      }}>
+        No upcoming contests
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+      {contests.slice(0, 4).map((contest, i) => {
+        const startTime = contest.startTimeSeconds
+          ? new Date(contest.startTimeSeconds * 1000)
+          : contest.start_time ? parseISO(contest.start_time) : null;
+        return (
+          <motion.div
+            key={contest.id || i}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.06, duration: 0.3 }}
+            style={{
+              display: "flex", alignItems: "center", gap: "10px",
+              padding: "10px 12px",
+              background: "#F8F8F8",
+              borderRadius: "12px", border: "2px solid #E8E8E8",
+            }}
+          >
+            <span style={{
+              fontSize: "20px", width: 28, textAlign: "center",
+            }}>
+              ⚡
+            </span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{
+                fontFamily: "var(--font-heading)", fontWeight: 600,
+                fontSize: "13px", margin: 0, color: "#121212",
+                whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+              }}>
+                {contest.contest_name || contest.name || "Codeforces Round"}
+              </p>
+              {startTime && (
+                <p style={{
+                  fontFamily: "var(--font-mono)", fontSize: "11px",
+                  margin: "2px 0 0", color: "#888",
+                }}>
+                  {format(startTime, "MMM d, HH:mm")} ({contest.durationSeconds
+                    ? `${Math.round(contest.durationSeconds / 3600)}h`
+                    : ""})
+                </p>
+              )}
+            </div>
+            <span style={{
+              fontFamily: "var(--font-mono)", fontWeight: 700,
+              fontSize: "11px", color: "#4D96FF",
+              whiteSpace: "nowrap",
+            }}>
+              {startTime ? (() => {
+                const diff = startTime.getTime() - Date.now();
+                const days = Math.floor(diff / 86400000);
+                const hours = Math.floor((diff % 86400000) / 3600000);
+                if (days > 0) return `${days}d ${hours}h`;
+                if (hours > 0) return `${hours}h`;
+                return "Soon";
+              })() : ""}
+            </span>
+          </motion.div>
+        );
+      })}
+    </div>
+  );
+}
 
 function EmptyState({ onConnect }) {
   return (
@@ -79,50 +344,121 @@ function EmptyState({ onConnect }) {
   );
 }
 
+const STAT_CARDS = [
+  { key: "xp",        label: "XP",                icon: null,               color: "#FFD93D" },
+  { key: "level",     label: "Level",             icon: null,               color: "#4D96FF" },
+  { key: "streak",    label: "Fire Streak",        icon: <StreakIcon />,    color: "#FF6B35" },
+
+  { key: "repositories", label: "Repositories",    icon: <RepoIcon />,      color: "#4D96FF" },
+  { key: "followers", label: "Followers",           icon: <FollowersIcon />, color: "#A855F7" },
+  { key: "contributions", label: "Contributions",   icon: <ContributionsIcon />, color: "#14B8A6" },
+];
+
+function useMediaQuery(query) {
+  const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const handler = (e) => setMatches(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, [query]);
+  return matches;
+}
+
 function Dashboard() {
   const navigate = useNavigate();
-  const isMobile = useMediaQuery("(max-width: 768px)");
-  const columns = isMobile ? 2 : 4;
+  const user = useAuthStore((state) => state.user);
+  const isMobile = useMediaQuery("(max-width: 1024px)");
+  const [syncing, setSyncing] = useState(false);
+  const [activityData, setActivityData] = useState(null);
 
-  const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["dashboardStats"],
+  const { data: statsData, isLoading: statsLoading, isError: statsError, error: statsErr, refetch: refetchStats } = useQuery({
+    queryKey: DASHBOARD_QUERY_KEY,
     queryFn: dashboardService.getStats,
   });
 
-  const stats = data?.data?.data;
+  const { data: heatmapData } = useQuery({
+    queryKey: ["dashboardHeatmap"],
+    queryFn: dashboardService.getHeatmap,
+  });
+
+  const { data: contestsData } = useQuery({
+    queryKey: ["upcomingContests"],
+    queryFn: contestService.getUpcomingContests,
+    staleTime: 300000,
+  });
+
+  useEffect(() => {
+    const fetchActivity = async () => {
+      try {
+        const res = await activityLogService.getRecentActivities();
+        setActivityData(res.data?.data);
+      } catch {
+        setActivityData([]);
+      }
+    };
+    fetchActivity();
+  }, []);
+
+  const stats = statsData?.data?.data;
   const isEmpty = stats && Object.values(stats).every((v) => v === 0);
+  const heatmap = heatmapData?.data?.data;
+  const contests = contestsData?.data?.data;
 
-  const grid = { ...gridStyle, gridTemplateColumns: `repeat(${columns}, 1fr)` };
+  const xp = stats ? stats.totalSolved * 25 + stats.streak * 10 + (stats.contributions || 0) * 2 : 0;
+  const level = stats ? Math.floor(Math.max(0, xp - 1) / 100) + 1 : 1;
 
-  if (isLoading) {
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      await platformService.syncAll();
+      toast.success("Sync completed!");
+      refetchStats();
+    } catch {
+      toast.error("Sync failed. Try again.");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  if (statsLoading) {
     return (
       <div style={{ paddingBottom: "32px" }}>
-        <h1 style={titleStyle}>⚡ Dashboard</h1>
-        <div style={grid}>
-          {Array.from({ length: 8 }, (_, i) => (
-            <Card key={i} padding="md">
-              <div style={cardContentStyle}>
-                <div className="animate-pulse" style={{ width: 28, height: 28, borderRadius: "50%", background: "#E8E8E8" }} />
-                <div className="animate-pulse" style={{ width: 60, height: 32, borderRadius: "8px", background: "#E8E8E8" }} />
-                <div className="animate-pulse" style={{ width: 90, height: 14, borderRadius: "8px", background: "#E8E8E8" }} />
-              </div>
-            </Card>
+        <div style={{ marginBottom: "24px" }}>
+          <Skeleton variant="text" width="280px" height={32} />
+        </div>
+        <Skeleton variant="card" height={80} />
+        <div style={{
+          display: "grid", gridTemplateColumns: `repeat(${isMobile ? 2 : 4}, 1fr)`,
+          gap: "16px", marginTop: "24px",
+        }}>
+          {Array.from({ length: 6 }, (_, i) => (
+            <Skeleton key={i} variant="card" height={130} />
           ))}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginTop: "24px" }}>
+          <Skeleton variant="card" height={120} />
+          <Skeleton variant="card" height={200} />
+          <Skeleton variant="card" height={120} />
         </div>
       </div>
     );
   }
 
-  if (isError) {
+  if (statsError) {
     return (
       <div style={{ paddingBottom: "32px" }}>
-        <h1 style={titleStyle}>⚡ Dashboard</h1>
         <Card padding="md" style={{ textAlign: "center", marginTop: "24px" }}>
           <div style={{ border: "3px solid #FF4757", borderRadius: "16px", padding: "24px" }}>
             <p style={{ fontFamily: "var(--font-body)", fontSize: "14px", color: "#FF4757", margin: "0 0 12px" }}>
-              {error?.response?.data?.message || error?.message || "Failed to load dashboard"}
+              {statsErr?.response?.data?.message || statsErr?.message || "Failed to load dashboard"}
             </p>
-            <button onClick={refetch} style={retryStyle}>Retry</button>
+            <button onClick={refetchStats} style={{
+              padding: "8px 24px", borderRadius: "12px",
+              border: "3px solid #000", background: "#FFD93D",
+              fontFamily: "var(--font-heading)", fontWeight: 700,
+              fontSize: "14px", cursor: "pointer", boxShadow: "4px 4px 0 #000",
+            }}>Retry</button>
           </div>
         </Card>
       </div>
@@ -132,115 +468,94 @@ function Dashboard() {
   if (isEmpty) {
     return (
       <div style={{ paddingBottom: "32px" }}>
-        <h1 style={titleStyle}>⚡ Dashboard</h1>
-        <EmptyState onConnect={() => navigate(ROUTES.connect)} />
+        <GreetingBanner name={user?.name || "Coder"} onSync={handleSync} syncing={syncing} />
+        <EmptyState onConnect={() => navigate(ROUTES.profile)} />
       </div>
     );
   }
 
   return (
-    <div style={{ paddingBottom: "32px" }}>
-      <h1 style={titleStyle}>⚡ Dashboard</h1>
-      {SECTIONS.map((section, sIdx) => {
-        const items = STATS_CONFIG.filter((s) => s.section === section.key);
-        return (
-          <div key={section.key}>
-            <h2 style={sectionHeaderStyle}>{section.label}</h2>
-            <motion.div
-              variants={{
-                hidden: {},
-                show: { transition: { staggerChildren: 0.08, delayChildren: 0.15 + sIdx * 0.4 } },
-              }}
-              initial="hidden"
-              animate="show"
-              style={grid}
-            >
-              {items.map((stat) => (
-                <motion.div
-                  key={stat.key}
-                  variants={{
-                    hidden: { opacity: 0, y: 24 },
-                    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 180, damping: 18 } },
-                  }}
-                >
-                  <Card padding="md">
-                    <div style={{ display: "flex", gap: "14px", alignItems: "stretch" }}>
-                      <div style={{ width: "4px", borderRadius: "4px", background: stat.color, flexShrink: 0 }} />
-                      <div style={cardContentStyle}>
-                        {stat.icon}
-                        <span style={{ ...numberStyle, color: stat.color }}>
-                          <AnimatedNumber value={stats[stat.key] ?? 0} />
-                        </span>
-                        <span style={labelStyle}>{stat.label}</span>
-                      </div>
-                    </div>
-                  </Card>
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
-        );
-      })}
-    </div>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      style={{ paddingBottom: "32px" }}
+    >
+      <GreetingBanner name={user?.name || "Coder"} onSync={handleSync} syncing={syncing} />
+      <AIMiniWidget />
+
+      <motion.div
+        variants={{
+          hidden: {},
+          show: { transition: { staggerChildren: 0.08 } },
+        }}
+        initial="hidden"
+        animate="show"
+        style={{
+          display: "grid",
+          gridTemplateColumns: `repeat(${isMobile ? 2 : 4}, 1fr)`,
+          gap: "16px", marginBottom: "24px",
+        }}
+      >
+        {STAT_CARDS.map((card) => (
+          <motion.div
+            key={card.key}
+            variants={{
+              hidden: { opacity: 0, y: 20 },
+              show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 180, damping: 18 } },
+            }}
+          >
+            {card.key === "level" ? (
+              <Card padding="md">
+                <div style={{
+                  display: "flex", flexDirection: "column", alignItems: "center",
+                  gap: "8px", textAlign: "center",
+                }}>
+                  <LevelIcon />
+                  <LevelBadge level={level} />
+                  <span style={{
+                    fontFamily: "var(--font-body)", fontSize: "13px",
+                    color: "#888", lineHeight: 1.2, marginTop: "4px",
+                  }}>
+                    Level
+                  </span>
+                </div>
+              </Card>
+            ) : card.key === "xp" ? (
+              <StatCard icon={<XPIcon />} value={xp} label="XP" color="#FFD93D" />
+            ) : (
+              <StatCard
+                icon={card.icon}
+                value={stats?.[card.key] ?? 0}
+                label={card.label}
+                color={card.color}
+                suffix={card.key === "streak" ? "🔥" : ""}
+              />
+            )}
+          </motion.div>
+        ))}
+      </motion.div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+        <Card padding="md">
+          <h3 style={sectionTitleStyle}>Recent Activity</h3>
+          <ActivityFeed activities={activityData} />
+        </Card>
+        <Card padding="md">
+          <h3 style={sectionTitleStyle}>Upcoming Contests</h3>
+          <UpcomingContestsCard contests={contests} />
+        </Card>
+      </div>
+    </motion.div>
   );
 }
 
-const titleStyle = {
+const sectionTitleStyle = {
   fontFamily: "var(--font-heading)",
   fontWeight: 700,
-  fontSize: "28px",
-  margin: "0 0 8px",
-  color: "var(--color-dark)",
-};
-
-const sectionHeaderStyle = {
-  fontFamily: "var(--font-heading)",
-  fontWeight: 600,
   fontSize: "16px",
-  color: "#888",
-  margin: "24px 0 12px",
-  letterSpacing: "0.5px",
-  textTransform: "uppercase",
-};
-
-const gridStyle = {
-  display: "grid",
-  gap: "16px",
-};
-
-const cardContentStyle = {
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  gap: "8px",
-  textAlign: "center",
-  flex: 1,
-};
-
-const numberStyle = {
-  fontFamily: "var(--font-heading)",
-  fontWeight: 700,
-  fontSize: "32px",
-  lineHeight: 1,
-};
-
-const labelStyle = {
-  fontFamily: "var(--font-body)",
-  fontSize: "13px",
-  color: "#666",
-  lineHeight: 1.2,
-};
-
-const retryStyle = {
-  padding: "8px 24px",
-  borderRadius: "12px",
-  border: "3px solid #000",
-  background: "#FFD93D",
-  fontFamily: "var(--font-heading)",
-  fontWeight: 700,
-  fontSize: "14px",
-  cursor: "pointer",
-  boxShadow: "4px 4px 0 #000",
+  margin: "0 0 12px",
+  color: "var(--color-dark)",
 };
 
 export default Dashboard;

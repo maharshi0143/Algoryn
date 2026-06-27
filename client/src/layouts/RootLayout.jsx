@@ -1,7 +1,11 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
+import { ROUTES } from "../constants/routes";
 
 function RootLayout() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isActive = (path) => location.pathname === path;
   return (
     <div
       style={{
@@ -38,8 +42,8 @@ function RootLayout() {
           </h2>
         </div>
         <nav style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1 }}>
-          <SidebarItem icon="🏠" label="Dashboard" active />
-          <SidebarItem icon="📊" label="Analytics" />
+          <SidebarItem icon="🏠" label="Dashboard" active={isActive(ROUTES.dashboard)} onClick={() => navigate(ROUTES.dashboard)} />
+          <SidebarItem icon="📊" label="Analytics" active={isActive(ROUTES.analytics)} onClick={() => navigate(ROUTES.analytics)} />
           <SidebarItem icon="🧠" label="AI Coach" />
           <SidebarItem icon="🏆" label="Leaderboard" />
           <SidebarItem icon="🔥" label="Daily Missions" />
@@ -64,9 +68,10 @@ function RootLayout() {
   );
 }
 
-function SidebarItem({ icon, label, active }) {
+function SidebarItem({ icon, label, active, onClick }) {
   return (
     <div
+      onClick={onClick}
       style={{
         display: "flex",
         alignItems: "center",

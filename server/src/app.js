@@ -37,6 +37,7 @@ const contestReminderRoutes = require("./routes/contestReminderRoutes");
 const publicProfileRoutes = require("./routes/publicProfileRoutes");
 const exportRoutes = require("./routes/exportRoutes");
 const emailPreferenceRoutes = require("./routes/emailPreferenceRoutes");
+const activityLogRoutes = require("./routes/activityLogRoutes");
 
 
 const notFoundMiddleware = require('./middlewares/notFoundMiddleware');
@@ -96,6 +97,7 @@ app.use("/api/contest-reminders", contestReminderRoutes);
 app.use("/api/public", publicProfileRoutes);
 app.use("/api/export", exportRoutes);
 app.use("/api/email-preferences", emailPreferenceRoutes);
+app.use("/api/activity-logs", activityLogRoutes);
 
 
 Sentry.setupExpressErrorHandler(app);
