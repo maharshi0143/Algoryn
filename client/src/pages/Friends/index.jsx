@@ -134,7 +134,7 @@ function Friends() {
                     {f.email}
                   </p>
                 </div>
-                <Button size="xs" variant="danger" onClick={() => removeMut.mutate(f.id)}>
+                <Button size="sm" variant="danger" onClick={() => removeMut.mutate(f.id)}>
                   Remove
                 </Button>
               </motion.div>
@@ -186,8 +186,8 @@ function Friends() {
                   </p>
                 </div>
                 <div style={{ display: "flex", gap: "4px" }}>
-                  <Button size="xs" onClick={() => acceptMut.mutate(p.id)}>Accept</Button>
-                  <Button size="xs" variant="ghost" onClick={() => rejectMut.mutate(p.id)}>Reject</Button>
+                  <Button size="sm" onClick={() => acceptMut.mutate(p.id)}>Accept</Button>
+                  <Button size="sm" variant="ghost" onClick={() => rejectMut.mutate(p.id)}>Reject</Button>
                 </div>
               </motion.div>
             ))}

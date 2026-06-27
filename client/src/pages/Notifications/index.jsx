@@ -88,11 +88,11 @@ function Notifications() {
                 </div>
                 <div style={{ display: "flex", gap: "4px", flexShrink: 0 }}>
                   {!n.is_read && (
-                    <Button size="xs" onClick={() => markReadMut.mutate(n.id)}>
+                    <Button size="sm" onClick={() => markReadMut.mutate(n.id)}>
                       Mark read
                     </Button>
                   )}
-                  <Button size="xs" variant="ghost" onClick={() => deleteMut.mutate(n.id)}>
+                  <Button size="sm" variant="ghost" onClick={() => deleteMut.mutate(n.id)}>
                     ✕
                   </Button>
                 </div>
