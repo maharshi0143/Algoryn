@@ -26,9 +26,9 @@ function Notifications() {
     queryFn: () => notificationService.list(page),
   });
 
-  const result = data?.data;
-  const items = result?.data || [];
-  const totalPages = result?.totalPages || 1;
+  const paginated = data?.data?.data;
+  const items = paginated?.data || [];
+  const totalPages = paginated?.totalPages || 1;
 
   const markReadMut = useMutation({
     mutationFn: notificationService.markRead,
