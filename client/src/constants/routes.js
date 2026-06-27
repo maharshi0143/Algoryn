@@ -11,6 +11,11 @@ export const ROUTES = {
   analytics: "/analytics",
   leaderboard: "/leaderboard",
   contests: "/contests",
+  achievements: "/achievements",
   profile: "/profile",
   settings: "/settings",
+  aiCoach: "/ai-coach",
+  notifications: "/notifications",
+  friends: "/friends",
+  goals: "/goals",
 };

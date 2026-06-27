@@ -44,14 +44,17 @@ function RootLayout() {
         <nav style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1 }}>
           <SidebarItem icon="🏠" label="Dashboard" active={isActive(ROUTES.dashboard)} onClick={() => navigate(ROUTES.dashboard)} />
           <SidebarItem icon="📊" label="Analytics" active={isActive(ROUTES.analytics)} onClick={() => navigate(ROUTES.analytics)} />
-          <SidebarItem icon="🧠" label="AI Coach" />
-          <SidebarItem icon="🏆" label="Leaderboard" />
-          <SidebarItem icon="🔥" label="Daily Missions" />
-          <SidebarItem icon="📅" label="Contests" />
+          <SidebarItem icon="🏆" label="Leaderboard" active={isActive(ROUTES.leaderboard)} onClick={() => navigate(ROUTES.leaderboard)} />
+          <SidebarItem icon="📅" label="Contests" active={isActive(ROUTES.contests)} onClick={() => navigate(ROUTES.contests)} />
+          <SidebarItem icon="⭐" label="Achievements" active={isActive(ROUTES.achievements)} onClick={() => navigate(ROUTES.achievements)} />
+          <SidebarItem icon="🤖" label="AI Coach" active={isActive(ROUTES.aiCoach)} onClick={() => navigate(ROUTES.aiCoach)} />
         </nav>
         <div style={{ borderTop: "3px solid #000", paddingTop: "16px" }}>
+          <SidebarItem icon="🔔" label="Notifications" active={isActive(ROUTES.notifications)} onClick={() => navigate(ROUTES.notifications)} />
+          <SidebarItem icon="👥" label="Friends" active={isActive(ROUTES.friends)} onClick={() => navigate(ROUTES.friends)} />
+          <SidebarItem icon="🎯" label="Goals" active={isActive(ROUTES.goals)} onClick={() => navigate(ROUTES.goals)} />
           <SidebarItem icon="👤" label="Profile" active={isActive(ROUTES.profile)} onClick={() => navigate(ROUTES.profile)} />
-          <SidebarItem icon="⚙" label="Settings" />
+          <SidebarItem icon="⚙" label="Settings" active={isActive(ROUTES.settings)} onClick={() => navigate(ROUTES.settings)} />
         </div>
       </div>
 

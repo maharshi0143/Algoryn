@@ -47,11 +47,14 @@ const syncGithub = async (userId) => {
     const sendNotif = () => notificationService.sendNotification(userId, "sync", "GitHub synced successfully")
         .catch(err => logger.error("Sync notification failed", err));
 
+    const today = new Date();
+
     if (!existingStats) {
         const stats = await githubStatsRepository.createGithubStats(
             profile.id, githubProfile.public_repos, githubProfile.followers,
             githubProfile.following, totalStars, contributions, languages
         );
+        await dailyStatsRepository.upsertDailyStats(userId, today, 0, 0, 0, 0, contributions);
         await sendNotif();
         return stats;
     }
@@ -61,6 +64,7 @@ const syncGithub = async (userId) => {
         githubProfile.following, totalStars, contributions, languages
     );
 
+    await dailyStatsRepository.upsertDailyStats(userId, today, 0, 0, 0, 0, contributions);
     await sendNotif();
 
     return stats;
@@ -221,15 +225,18 @@ const syncGFG = async (userId) => {
     const mediumCount = gfgProfile.Medium || 0;
     const hardCount = gfgProfile.Hard || 0;
 
+    const today = new Date();
     const existingStats = await problemStatsRepository.findProblemStatsByProfileId(profile.id);
 
     if (!existingStats) {
         const stats = await problemStatsRepository.createProblemStats(profile.id, totalSolved, easyCount, mediumCount, hardCount, 0, 0, 0);
+        await dailyStatsRepository.upsertDailyStats(userId, today, totalSolved, easyCount, mediumCount, hardCount, 0);
         notificationService.sendNotification(userId, "sync", "GFG synced successfully").catch(err => logger.error("Sync notification failed", err));
         return stats;
     }
 
     const stats = await problemStatsRepository.updateProblemStats(profile.id, totalSolved, easyCount, mediumCount, hardCount, existingStats.rating, existingStats.ranking, existingStats.streak);
+    await dailyStatsRepository.upsertDailyStats(userId, today, totalSolved, easyCount, mediumCount, hardCount, 0);
     notificationService.sendNotification(userId, "sync", "GFG synced successfully").catch(err => logger.error("Sync notification failed", err));
     return stats;
 };
@@ -254,8 +261,11 @@ const syncHackerRank = async (userId) => {
         ? Math.max(...badgeData.badges.map((b) => parseInt(b.id?.split(":").pop()) || 0), 0)
         : 0;
 
+    const today = new Date();
+
     if (!existingStats) {
         const result = await problemStatsRepository.createProblemStats(profile.id, totalSolved, 0, 0, 0, 0, stars, 0);
+        await dailyStatsRepository.upsertDailyStats(userId, today, totalSolved, 0, 0, 0, 0);
         notificationService.sendNotification(userId, "sync", "HackerRank synced successfully").catch(err => logger.error("Sync notification failed", err));
         return result;
     }
@@ -265,6 +275,7 @@ const syncHackerRank = async (userId) => {
         existingStats.easy_count, existingStats.medium_count, existingStats.hard_count,
         0, stars, existingStats.streak
     );
+    await dailyStatsRepository.upsertDailyStats(userId, today, totalSolved, 0, 0, 0, 0);
     notificationService.sendNotification(userId, "sync", "HackerRank synced successfully").catch(err => logger.error("Sync notification failed", err));
     return result;
 };

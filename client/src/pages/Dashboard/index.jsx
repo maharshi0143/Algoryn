@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import toast from "react-hot-toast";
@@ -13,6 +13,7 @@ import { contestService } from "../../services/contestService";
 
 import { platformService } from "../../services/platformService";
 import { activityLogService } from "../../services/activityLogService";
+import { dailyStatsService } from "../../services/dailyStatsService";
 import { ROUTES } from "../../constants/routes";
 import {
   StreakIcon, RepoIcon, FollowersIcon, ContributionsIcon,
@@ -68,7 +69,7 @@ function GreetingBanner({ name, onSync, syncing }) {
   );
 }
 
-function AIMiniWidget() {
+function AIMiniWidget({ onClaimXp, claiming }) {
   return (
     <Card padding="md" style={{
       marginBottom: "24px",
@@ -93,14 +94,17 @@ function AIMiniWidget() {
             }}>+250 XP</span>
           </p>
         </div>
-        <div style={{
-          background: "#6BCB77", color: "#fff",
-          borderRadius: "12px", padding: "8px 16px",
-          fontFamily: "var(--font-heading)", fontWeight: 700,
-          fontSize: "12px", border: "2px solid #000",
-          whiteSpace: "nowrap", cursor: "pointer",
-        }}>
-          Claim XP →
+        <div
+          onClick={onClaimXp}
+          style={{
+            background: claiming ? "#aaa" : "#6BCB77", color: "#fff",
+            borderRadius: "12px", padding: "8px 16px",
+            fontFamily: "var(--font-heading)", fontWeight: 700,
+            fontSize: "12px", border: "2px solid #000",
+            whiteSpace: "nowrap", cursor: claiming ? "not-allowed" : "pointer",
+          }}
+        >
+          {claiming ? "..." : "Claim XP →"}
         </div>
       </div>
     </Card>
@@ -367,9 +371,11 @@ function useMediaQuery(query) {
 
 function Dashboard() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
   const isMobile = useMediaQuery("(max-width: 1024px)");
   const [syncing, setSyncing] = useState(false);
+  const [claiming, setClaiming] = useState(false);
   const [activityData, setActivityData] = useState(null);
 
   const { data: statsData, isLoading: statsLoading, isError: statsError, error: statsErr, refetch: refetchStats } = useQuery({
@@ -408,12 +414,27 @@ function Dashboard() {
   const xp = stats ? stats.totalSolved * 25 + stats.streak * 10 + (stats.contributions || 0) * 2 : 0;
   const level = stats ? Math.floor(Math.max(0, xp - 1) / 100) + 1 : 1;
 
+  const handleClaimXp = async () => {
+    if (claiming) return;
+    setClaiming(true);
+    try {
+      await dailyStatsService.populate();
+      toast.success("+250 XP claimed! Daily stats updated.");
+      refetchStats();
+    } catch {
+      toast.error("Failed to claim XP. Try again.");
+    } finally {
+      setClaiming(false);
+    }
+  };
+
   const handleSync = async () => {
     setSyncing(true);
     try {
       await platformService.syncAll();
       toast.success("Sync completed!");
       refetchStats();
+      queryClient.invalidateQueries({ queryKey: ["analytics"] });
     } catch {
       toast.error("Sync failed. Try again.");
     } finally {
@@ -482,7 +503,7 @@ function Dashboard() {
       style={{ paddingBottom: "32px" }}
     >
       <GreetingBanner name={user?.name || "Coder"} onSync={handleSync} syncing={syncing} />
-      <AIMiniWidget />
+      <AIMiniWidget onClaimXp={handleClaimXp} claiming={claiming} />
 
       <motion.div
         variants={{

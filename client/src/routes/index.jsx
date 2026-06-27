@@ -16,6 +16,14 @@ const Import = lazy(() => import("../pages/Import"));
 const Dashboard = lazy(() => import("../pages/Dashboard"));
 const Analytics = lazy(() => import("../pages/Analytics"));
 const Profile = lazy(() => import("../pages/Profile"));
+const Leaderboard = lazy(() => import("../pages/Leaderboard"));
+const Contests = lazy(() => import("../pages/Contests"));
+const Achievements = lazy(() => import("../pages/Achievements"));
+const Settings = lazy(() => import("../pages/Settings"));
+const AICoach = lazy(() => import("../pages/AICoach"));
+const Notifications = lazy(() => import("../pages/Notifications"));
+const Friends = lazy(() => import("../pages/Friends"));
+const Goals = lazy(() => import("../pages/Goals"));
 
 function AppRoutes() {
   return (
@@ -56,6 +64,14 @@ function AppRoutes() {
             <Route path={ROUTES.dashboard} element={<Dashboard />} />
             <Route path={ROUTES.analytics} element={<Analytics />} />
             <Route path={ROUTES.profile} element={<Profile />} />
+            <Route path={ROUTES.leaderboard} element={<Leaderboard />} />
+            <Route path={ROUTES.contests} element={<Contests />} />
+            <Route path={ROUTES.achievements} element={<Achievements />} />
+            <Route path={ROUTES.settings} element={<Settings />} />
+            <Route path={ROUTES.aiCoach} element={<AICoach />} />
+            <Route path={ROUTES.notifications} element={<Notifications />} />
+            <Route path={ROUTES.friends} element={<Friends />} />
+            <Route path={ROUTES.goals} element={<Goals />} />
           </Route>
 
           {/* Fallback */}

@@ -12,6 +12,8 @@ function Profile() {
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(null);
   const [deleting, setDeleting] = useState(null);
+  const [editing, setEditing] = useState(null);
+  const [saving, setSaving] = useState(null);
 
   const fetchProfiles = useCallback(async () => {
     try {
@@ -36,10 +38,21 @@ function Profile() {
     setUsernames((prev) => ({ ...prev, [platformId]: value }));
   };
 
+  const getValidationError = (platformId, username) => {
+    if (!username || username.length < 2) return "Username must be at least 2 characters";
+    if (username.length > 39) return "Username must be under 40 characters";
+    if (!/^[a-zA-Z0-9_.-]+$/.test(username)) return "Username can only contain letters, numbers, hyphens, underscores, and dots";
+    if (platformId === "leetcode" && !/^[a-zA-Z0-9_-]+$/.test(username)) return "LeetCode usernames can only contain letters, numbers, hyphens, and underscores";
+    if (platformId === "codeforces" && !/^[a-zA-Z0-9_-]+$/.test(username)) return "Codeforces usernames can only contain letters, numbers, hyphens, and underscores";
+    if (platformId === "github" && !/^[a-zA-Z0-9-]+$/.test(username)) return "GitHub usernames can only contain letters, numbers, and hyphens";
+    return null;
+  };
+
   const handleConnect = async (platform) => {
     const username = usernames[platform.id]?.trim();
-    if (!username) {
-      toast.error(`Enter your ${platform.name} username`);
+    const validationError = getValidationError(platform.id, username);
+    if (validationError) {
+      toast.error(validationError);
       return;
     }
     setConnecting(platform.id);
@@ -64,6 +77,38 @@ function Profile() {
       toast.error("Failed to disconnect");
     } finally {
       setDeleting(null);
+    }
+  };
+
+  const handleEdit = (platformId) => {
+    setEditing(platformId);
+  };
+
+  const handleCancelEdit = () => {
+    setEditing(null);
+    setSaving(null);
+    const profile = profiles.find((p) => p.platform === editing);
+    if (profile) {
+      setUsernames((prev) => ({ ...prev, [profile.platform]: profile.username }));
+    }
+  };
+
+  const handleUpdate = async (platformName, profileId) => {
+    const newUsername = usernames[profiles.find((p) => p.id === profileId)?.platform]?.trim();
+    if (!newUsername) {
+      toast.error("Username cannot be empty");
+      return;
+    }
+    setSaving(profileId);
+    try {
+      await userService.updatePlatform(profileId, newUsername);
+      toast.success(`${platformName} updated!`);
+      setEditing(null);
+      await fetchProfiles();
+    } catch (err) {
+      toast.error(err.response?.data?.message || `Failed to update ${platformName}`);
+    } finally {
+      setSaving(null);
     }
   };
 
@@ -151,35 +196,91 @@ function Profile() {
               />
               {isConnected ? (
                 <div style={{ display: "flex", gap: "8px" }}>
-                  <span style={{
-                    padding: "8px 16px", borderRadius: "10px",
-                    border: "2px solid #000",
-                    background: "#6BCB77",
-                    boxShadow: "3px 3px 0 #000",
-                    fontFamily: "var(--font-heading)", fontWeight: 700,
-                    fontSize: "12px", color: "#fff",
-                    whiteSpace: "nowrap",
-                  }}>
-                    Connected ✅
-                  </span>
-                  <button
-                    onClick={() => handleDisconnect(platform.name, profile.id)}
-                    disabled={isDeleting}
-                    style={{
-                      padding: "8px 16px", borderRadius: "10px",
-                      border: "2px solid #000",
-                      background: isDeleting ? "#E0E0E0" : "#FF4757",
-                      boxShadow: "3px 3px 0 #000",
-                      fontFamily: "var(--font-heading)", fontWeight: 700,
-                      fontSize: "12px",
-                      color: "#fff",
-                      cursor: isDeleting ? "default" : "pointer",
-                      opacity: isDeleting ? 0.8 : 1,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {isDeleting ? "..." : "Disconnect ✕"}
-                  </button>
+                  {editing === platform.id ? (
+                    <>
+                      <button
+                        onClick={() => handleUpdate(platform.name, profile.id)}
+                        disabled={saving === profile.id}
+                        style={{
+                          padding: "8px 16px", borderRadius: "10px",
+                          border: "2px solid #000",
+                          background: saving === profile.id ? "#E0E0E0" : "#6BCB77",
+                          boxShadow: "3px 3px 0 #000",
+                          fontFamily: "var(--font-heading)", fontWeight: 700,
+                          fontSize: "12px", color: "#fff",
+                          cursor: saving === profile.id ? "default" : "pointer",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {saving === profile.id ? "..." : "Save"}
+                      </button>
+                      <button
+                        onClick={handleCancelEdit}
+                        disabled={saving === profile.id}
+                        style={{
+                          padding: "8px 16px", borderRadius: "10px",
+                          border: "2px solid #000",
+                          background: "#E0E0E0",
+                          boxShadow: "3px 3px 0 #000",
+                          fontFamily: "var(--font-heading)", fontWeight: 700,
+                          fontSize: "12px",
+                          color: "#444",
+                          cursor: saving === profile.id ? "default" : "pointer",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <span style={{
+                        padding: "8px 16px", borderRadius: "10px",
+                        border: "2px solid #000",
+                        background: "#6BCB77",
+                        boxShadow: "3px 3px 0 #000",
+                        fontFamily: "var(--font-heading)", fontWeight: 700,
+                        fontSize: "12px", color: "#fff",
+                        whiteSpace: "nowrap",
+                      }}>
+                        Connected ✅
+                      </span>
+                      <button
+                        onClick={() => handleEdit(platform.id)}
+                        style={{
+                          padding: "8px 16px", borderRadius: "10px",
+                          border: "2px solid #000",
+                          background: "#FFD93D",
+                          boxShadow: "3px 3px 0 #000",
+                          fontFamily: "var(--font-heading)", fontWeight: 700,
+                          fontSize: "12px",
+                          color: "var(--color-dark)",
+                          cursor: "pointer",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        Edit ✏️
+                      </button>
+                      <button
+                        onClick={() => handleDisconnect(platform.name, profile.id)}
+                        disabled={isDeleting}
+                        style={{
+                          padding: "8px 16px", borderRadius: "10px",
+                          border: "2px solid #000",
+                          background: isDeleting ? "#E0E0E0" : "#FF4757",
+                          boxShadow: "3px 3px 0 #000",
+                          fontFamily: "var(--font-heading)", fontWeight: 700,
+                          fontSize: "12px",
+                          color: "#fff",
+                          cursor: isDeleting ? "default" : "pointer",
+                          opacity: isDeleting ? 0.8 : 1,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {isDeleting ? "..." : "Disconnect ✕"}
+                      </button>
+                    </>
+                  )}
                 </div>
               ) : (
                 <button

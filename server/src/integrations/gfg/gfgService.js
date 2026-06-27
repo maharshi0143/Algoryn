@@ -8,8 +8,17 @@ const fetchGFGProfile = async (username) => {
         const { data } = await axios.get(`${BASE_URL}/${username}`, { timeout: 10000 });
         return data;
     } catch (error) {
-        const err = new Error(`GFG API error: ${error.message}`);
-        err.statusCode = error.response?.status || HTTP_STATUS.SERVICE_UNAVAILABLE;
+        const status = error.response?.status;
+        let message;
+        if (status === 404) {
+            message = `GFG user "${username}" not found. Please check your username.`;
+        } else if (error.code === "ECONNREFUSED" || error.code === "ETIMEDOUT" || error.code === "ECONNABORTED") {
+            message = "GFG API is temporarily unavailable. Please try again later.";
+        } else {
+            message = `Failed to sync GeeksforGeeks: ${error.message}`;
+        }
+        const err = new Error(message);
+        err.statusCode = status || HTTP_STATUS.SERVICE_UNAVAILABLE;
         throw err;
     }
 };
