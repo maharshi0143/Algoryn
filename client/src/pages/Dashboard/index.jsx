@@ -69,43 +69,45 @@ function GreetingBanner({ name, onSync, syncing }) {
   );
 }
 
-function AIMiniWidget({ onClaimXp, claiming }) {
+function AIMiniWidget({ onClaimXp, claiming, claimed }) {
   return (
     <Card padding="md" style={{
       marginBottom: "24px",
-      background: "linear-gradient(135deg, #FFF3CD 0%, #FFE5A0 100%)",
+      background: claimed ? "#E8FFE8" : "linear-gradient(135deg, #FFF3CD 0%, #FFE5A0 100%)",
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-        <span style={{ fontSize: "28px" }}>🧠</span>
+        <span style={{ fontSize: "28px" }}>{claimed ? "✅" : "🧠"}</span>
         <div style={{ flex: 1 }}>
           <p style={{
             fontFamily: "var(--font-heading)", fontWeight: 700,
             fontSize: "15px", margin: "0 0 2px", color: "var(--color-dark)",
           }}>
-            Today&apos;s Mission
+            {claimed ? "Today&apos;s XP Claimed!" : "Today&apos;s Mission"}
           </p>
           <p style={{
             fontFamily: "var(--font-body)", fontSize: "13px",
             margin: 0, color: "#665",
           }}>
-            Solve 2 Graph problems  <span style={{
+            {claimed ? "Come back tomorrow for more XP" : <>Solve 2 Graph problems  <span style={{
               fontFamily: "var(--font-mono)", fontWeight: 600,
               color: "#6BCB77", fontSize: "14px",
-            }}>+250 XP</span>
+            }}>+250 XP</span></>}
           </p>
         </div>
-        <div
-          onClick={onClaimXp}
-          style={{
-            background: claiming ? "#aaa" : "#6BCB77", color: "#fff",
-            borderRadius: "12px", padding: "8px 16px",
-            fontFamily: "var(--font-heading)", fontWeight: 700,
-            fontSize: "12px", border: "2px solid #000",
-            whiteSpace: "nowrap", cursor: claiming ? "not-allowed" : "pointer",
-          }}
-        >
-          {claiming ? "..." : "Claim XP →"}
-        </div>
+        {!claimed && (
+          <div
+            onClick={onClaimXp}
+            style={{
+              background: claiming ? "#aaa" : "#6BCB77", color: "#fff",
+              borderRadius: "12px", padding: "8px 16px",
+              fontFamily: "var(--font-heading)", fontWeight: 700,
+              fontSize: "12px", border: "2px solid #000",
+              whiteSpace: "nowrap", cursor: claiming ? "not-allowed" : "pointer",
+            }}
+          >
+            {claiming ? "..." : "Claim XP →"}
+          </div>
+        )}
       </div>
     </Card>
   );
@@ -376,6 +378,7 @@ function Dashboard() {
   const isMobile = useMediaQuery("(max-width: 1024px)");
   const [syncing, setSyncing] = useState(false);
   const [claiming, setClaiming] = useState(false);
+  const [claimed, setClaimed] = useState(false);
   const [activityData, setActivityData] = useState(null);
 
   const { data: statsData, isLoading: statsLoading, isError: statsError, error: statsErr, refetch: refetchStats } = useQuery({
@@ -415,11 +418,12 @@ function Dashboard() {
   const level = stats ? Math.floor(Math.max(0, xp - 1) / 100) + 1 : 1;
 
   const handleClaimXp = async () => {
-    if (claiming) return;
+    if (claiming || claimed) return;
     setClaiming(true);
     try {
       await dailyStatsService.populate();
       toast.success("+250 XP claimed! Daily stats updated.");
+      setClaimed(true);
       refetchStats();
     } catch {
       toast.error("Failed to claim XP. Try again.");
@@ -503,7 +507,7 @@ function Dashboard() {
       style={{ paddingBottom: "32px" }}
     >
       <GreetingBanner name={user?.name || "Coder"} onSync={handleSync} syncing={syncing} />
-      <AIMiniWidget onClaimXp={handleClaimXp} claiming={claiming} />
+      <AIMiniWidget onClaimXp={handleClaimXp} claiming={claiming} claimed={claimed} />
 
       <motion.div
         variants={{

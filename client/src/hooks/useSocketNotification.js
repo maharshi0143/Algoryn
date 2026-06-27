@@ -18,7 +18,9 @@ export function useSocketNotification(onNew) {
     try {
       socket = io(SOCKET_URL, {
         auth: { token: accessToken },
-        transports: ["websocket", "polling"],
+        reconnectionAttempts: 3,
+        reconnectionDelay: 5000,
+        timeout: 10000,
       });
     } catch {
       return;
