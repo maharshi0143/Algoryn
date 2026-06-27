@@ -5,6 +5,7 @@ const logger = require("../utils/logger");
 const profileRepository = require("../repositories/profileRepository");
 const githubStatsRepository = require("../repositories/githubStatsRepository");
 const problemStatsRepository = require("../repositories/problemStatsRepository");
+const dailyStatsRepository = require("../repositories/dailyStatsRepository");
 const notificationService = require("./notificationService");
 const contestService = require("./contestService");
 const { fetchGithubProfile, fetchGithubRepositories, fetchGithubContributions } = require("../integrations/github/githubService");
@@ -116,6 +117,13 @@ const syncLeetCode = async (userId) => {
                     break;
                 }
             }
+
+            await Promise.all(
+                Object.entries(cal).map(([ts, submissions]) => {
+                    const date = new Date(Number(ts) * 1000);
+                    return dailyStatsRepository.upsertDailyStats(userId, date, Number(submissions), 0, 0, 0, 0);
+                })
+            );
         }
     }
 
