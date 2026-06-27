@@ -14,6 +14,30 @@ const fetchLeetCodeProfile = async (username) => {
     }
 };
 
+const fetchLeetCodeSolved = async (username) => {
+    try {
+        const { data } = await axios.get(`${BASE_URL}/${username}/solved`, { timeout: 10000 });
+        return data;
+    } catch (error) {
+        const err = new Error(`LeetCode solved API error: ${error.message}`);
+        err.statusCode = error.response?.status || HTTP_STATUS.SERVICE_UNAVAILABLE;
+        throw err;
+    }
+};
+
+const fetchLeetCodeCalendar = async (username) => {
+    try {
+        const { data } = await axios.get(`${BASE_URL}/${username}/calendar`, { timeout: 10000 });
+        return data;
+    } catch (error) {
+        const err = new Error(`LeetCode calendar API error: ${error.message}`);
+        err.statusCode = error.response?.status || HTTP_STATUS.SERVICE_UNAVAILABLE;
+        throw err;
+    }
+};
+
 module.exports = {
     fetchLeetCodeProfile,
+    fetchLeetCodeSolved,
+    fetchLeetCodeCalendar,
 };

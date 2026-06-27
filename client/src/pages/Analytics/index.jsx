@@ -6,7 +6,6 @@ import Skeleton from "../../components/ui/Skeleton";
 import Tabs from "../../components/ui/Tabs";
 import { analyticsService, ANALYTICS_QUERY_KEY } from "../../services/analyticsService";
 import { PLATFORMS } from "../../services/platformService";
-import { SolvedIcon, EasyIcon, MediumIcon, HardIcon } from "../Dashboard/DashboardIcons";
 
 function AnimatedNumber({ value, suffix = "" }) {
   const [display, setDisplay] = useState(0);
@@ -153,11 +152,6 @@ function Analytics() {
     queryFn: analyticsService.getPlatforms,
   });
 
-  const { data: difficultyData, isLoading: difficultyLoading } = useQuery({
-    queryKey: [...ANALYTICS_QUERY_KEY, "difficulty"],
-    queryFn: analyticsService.getDifficulty,
-  });
-
   const { data: yearlyData, isLoading: yearlyLoading } = useQuery({
     queryKey: [...ANALYTICS_QUERY_KEY, "yearly"],
     queryFn: analyticsService.getYearly,
@@ -168,14 +162,11 @@ function Analytics() {
     queryFn: analyticsService.getLanguages,
   });
 
-  const isLoading = platformsLoading || difficultyLoading || yearlyLoading || languagesLoading;
+  const isLoading = platformsLoading || yearlyLoading || languagesLoading;
 
   const platforms = platformsData?.data?.data || [];
-  const difficulty = difficultyData?.data?.data || { easy: 0, medium: 0, hard: 0 };
   const yearly = yearlyData?.data?.data || [];
   const languages = languagesData?.data?.data || [];
-
-  const totalSolved = (difficulty.easy || 0) + (difficulty.medium || 0) + (difficulty.hard || 0);
 
   const monthlyProgress = yearly.map((m) => ({
     label: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][(m.month || 1) - 1],
@@ -242,7 +233,7 @@ function Analytics() {
           display: "grid", gridTemplateColumns: `repeat(${isMobile ? 2 : 4}, 1fr)`,
           gap: "16px", marginTop: "24px",
         }}>
-          {Array.from({ length: 4 }, (_, i) => (
+          {Array.from({ length: 6 }, (_, i) => (
             <Skeleton key={i} variant="card" height={130} />
           ))}
         </div>
@@ -275,10 +266,18 @@ function Analytics() {
         gridTemplateColumns: `repeat(${isMobile ? 2 : 4}, 1fr)`,
         gap: "16px", marginBottom: "24px",
       }}>
-        <StatCard icon={<SolvedIcon />} value={totalSolved} label="Total Solved" color="#FFD93D" />
-        <StatCard icon={<EasyIcon />} value={difficulty.easy || 0} label="Easy" color="#6BCB77" />
-        <StatCard icon={<MediumIcon />} value={difficulty.medium || 0} label="Medium" color="#FF9F43" />
-        <StatCard icon={<HardIcon />} value={difficulty.hard || 0} label="Hard" color="#FF4757" />
+        {PLATFORMS.map((p) => {
+          const match = platforms.find((pf) => pf.platform === p.id);
+          return (
+            <StatCard
+              key={p.id}
+              icon={<p.icon />}
+              value={match?.total_solved || 0}
+              label={p.name}
+              color={p.color}
+            />
+          );
+        })}
       </div>
 
       <Card padding="md" style={{ marginBottom: "20px" }}>

@@ -10,4 +10,6 @@ export const userService = {
     api.post(ENDPOINTS.profiles, { platform, username }),
 
   getPlatforms: () => api.get(ENDPOINTS.profiles),
+
+  deletePlatform: (id) => api.delete(`${ENDPOINTS.profiles}/${id}`),
 };

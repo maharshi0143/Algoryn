@@ -8,7 +8,7 @@ const problemStatsRepository = require("../repositories/problemStatsRepository")
 const notificationService = require("./notificationService");
 const contestService = require("./contestService");
 const { fetchGithubProfile, fetchGithubRepositories, fetchGithubContributions } = require("../integrations/github/githubService");
-const { fetchLeetCodeProfile } = require("../integrations/leetcode/leetcodeService");
+const { fetchLeetCodeProfile, fetchLeetCodeSolved, fetchLeetCodeCalendar } = require("../integrations/leetcode/leetcodeService");
 const { fetchCodeforcesProfile, fetchCodeforcesRatingHistory } = require("../integrations/codeforces/codeforcesService");
 const { fetchCodeChefProfile } = require("../integrations/codechef/codechefService");
 const { fetchGFGProfile } = require("../integrations/gfg/gfgService");
@@ -73,24 +73,28 @@ const syncLeetCode = async (userId) => {
         throw new ApiError(HTTP_STATUS.NOT_FOUND, "LeetCode profile not found");
     }
 
-    const leetcodeProfile = await fetchLeetCodeProfile(profile.username);
+    const [leetcodeProfile, solvedData, calendarData] = await Promise.all([
+        fetchLeetCodeProfile(profile.username),
+        fetchLeetCodeSolved(profile.username),
+        fetchLeetCodeCalendar(profile.username),
+    ]);
 
-    const totalSolved = leetcodeProfile.totalSolved || 0;
-    const easyCount = leetcodeProfile.easySolved || 0;
-    const mediumCount = leetcodeProfile.mediumSolved || 0;
-    const hardCount = leetcodeProfile.hardSolved || 0;
-    const ranking = leetcodeProfile.ranking || 0;
+    const totalSolved = solvedData?.solvedProblem || 0;
+    const easyCount = solvedData?.easySolved || 0;
+    const mediumCount = solvedData?.mediumSolved || 0;
+    const hardCount = solvedData?.hardSolved || 0;
+    const ranking = leetcodeProfile?.ranking || 0;
 
     let streak = 0;
 
-    if (leetcodeProfile.submissionCalendar) {
+    const rawCal = calendarData?.submissionCalendar;
+    if (rawCal) {
         let cal;
-
-        if (typeof leetcodeProfile.submissionCalendar === "object" && !Array.isArray(leetcodeProfile.submissionCalendar)) {
-            cal = leetcodeProfile.submissionCalendar;
-        } else if (typeof leetcodeProfile.submissionCalendar === "string") {
+        if (typeof rawCal === "object" && !Array.isArray(rawCal)) {
+            cal = rawCal;
+        } else if (typeof rawCal === "string") {
             try {
-                cal = JSON.parse(leetcodeProfile.submissionCalendar);
+                cal = JSON.parse(rawCal);
             } catch {
                 cal = null;
             }

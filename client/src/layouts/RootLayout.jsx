@@ -50,7 +50,7 @@ function RootLayout() {
           <SidebarItem icon="📅" label="Contests" />
         </nav>
         <div style={{ borderTop: "3px solid #000", paddingTop: "16px" }}>
-          <SidebarItem icon="👤" label="Profile" />
+          <SidebarItem icon="👤" label="Profile" active={isActive(ROUTES.profile)} onClick={() => navigate(ROUTES.profile)} />
           <SidebarItem icon="⚙" label="Settings" />
         </div>
       </div>
