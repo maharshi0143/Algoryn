@@ -82,13 +82,13 @@ function AIMiniWidget({ onClaimXp, claiming, claimed }) {
             fontFamily: "var(--font-heading)", fontWeight: 700,
             fontSize: "15px", margin: "0 0 2px", color: "var(--color-dark)",
           }}>
-            {claimed ? "Today&apos;s XP Claimed!" : "Today&apos;s Mission"}
+            Today's Mission
           </p>
           <p style={{
             fontFamily: "var(--font-body)", fontSize: "13px",
             margin: 0, color: "#665",
           }}>
-            {claimed ? "Come back tomorrow for more XP" : <>Solve 2 Graph problems  <span style={{
+            {claimed ? "Great work! Come back tomorrow for more." : <>Solve 2 Graph problems  <span style={{
               fontFamily: "var(--font-mono)", fontWeight: 600,
               color: "#6BCB77", fontSize: "14px",
             }}>+250 XP</span></>}
