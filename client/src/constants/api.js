@@ -20,7 +20,7 @@ export const ENDPOINTS = {
 
   // Dashboard
   dashboard: "/dashboard",
-  dashboardStats: "/dashboard/stats",
+  dashboardStats: "/dashboard",
   dashboardHeatmap: "/dashboard/heatmap",
 
   // Analytics

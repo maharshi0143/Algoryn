@@ -6,6 +6,7 @@ import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
 import useAuthStore from "../store/authStore";
 import { authService } from "../services/authService";
+import { userService } from "../services/userService";
 import { ROUTES } from "../constants/routes";
 
 function MailIcon() {
@@ -80,8 +81,14 @@ function Login() {
       const res = await authService.login(form.email.trim(), form.password);
       const { user, accessToken } = res.data.data;
       storeLogin(user, accessToken);
+      try {
+        const profileRes = await userService.getProfile();
+        const hasProfiles = profileRes.data.data?.total > 0;
+        navigate(hasProfiles ? ROUTES.dashboard : ROUTES.welcome);
+      } catch {
+        navigate(ROUTES.welcome);
+      }
       toast.success(`Welcome back, ${user.name}!`);
-      navigate(ROUTES.welcome);
     } catch (err) {
       const message = err.response?.data?.message || "Login failed";
       setLoginError(message);

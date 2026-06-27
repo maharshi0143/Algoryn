@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import useUIStore from "../../store/uiStore";
 import { ROUTES } from "../../constants/routes";
+import { platformService } from "../../services/platformService";
+
+const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const steps = [
   { label: "Initializing...", percent: 35 },
@@ -21,44 +24,52 @@ function Import() {
 
   useEffect(() => {
     mounted.current = true;
-    let timers = [];
 
     const run = async () => {
-      for (let i = 0; i < steps.length; i++) {
-        await new Promise((resolve) => {
-          const t = setTimeout(() => {
-            if (mounted.current) setCurrentStep(i + 1);
-            resolve();
-          }, 600 + i * 100);
-          timers.push(t);
-        });
+      // Step 1: Initialize
+      if (!mounted.current) return;
+      setCurrentStep(1);
+      await delay(600);
+
+      // Step 2-3: Sync all connected platforms
+      if (!mounted.current) return;
+      setCurrentStep(2);
+      try {
+        await platformService.syncAll();
+      } catch {
+        // continue even if sync fails
       }
 
-      await new Promise((resolve) => {
-        const t = setTimeout(() => {
-          if (mounted.current) setDone(true);
-          resolve();
-        }, 1200);
-        timers.push(t);
-      });
+      // Step 3: LeetCode step (visual)
+      if (!mounted.current) return;
+      setCurrentStep(3);
+      await delay(400);
 
-      await new Promise((resolve) => {
-        const t = setTimeout(() => {
-          if (mounted.current) {
-            resetOnboarding();
-            navigate(ROUTES.dashboard, { replace: true });
-          }
-          resolve();
-        }, 800);
-        timers.push(t);
-      });
+      // Step 4: AI
+      if (!mounted.current) return;
+      setCurrentStep(4);
+      await delay(400);
+
+      // Step 5: Prepare dashboard
+      if (!mounted.current) return;
+      setCurrentStep(5);
+      await delay(500);
+
+      // Done
+      if (mounted.current) setDone(true);
+      await delay(800);
+
+      // Navigate
+      if (mounted.current) {
+        resetOnboarding();
+        navigate(ROUTES.dashboard, { replace: true });
+      }
     };
 
     run();
 
     return () => {
       mounted.current = false;
-      timers.forEach(clearTimeout);
     };
   }, [navigate, resetOnboarding]);
 

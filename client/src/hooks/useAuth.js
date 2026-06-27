@@ -3,6 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import useAuthStore from "../store/authStore";
 import { authService } from "../services/authService";
+import { userService } from "../services/userService";
 import { ROUTES } from "../constants/routes";
 
 export function useAuth() {
@@ -12,11 +13,17 @@ export function useAuth() {
   const registerMutation = useMutation({
     mutationFn: ({ name, email, password }) =>
       authService.register(name, email, password),
-    onSuccess: (res) => {
+    onSuccess: async (res) => {
       const { user: userData, accessToken } = res.data.data;
       login(userData, accessToken);
+      try {
+        const profileRes = await userService.getProfile();
+        const hasProfiles = profileRes.data.data?.total > 0;
+        navigate(hasProfiles ? ROUTES.dashboard : ROUTES.welcome);
+      } catch {
+        navigate(ROUTES.welcome);
+      }
       toast.success(`Welcome, ${userData.name}!`);
-      navigate(ROUTES.welcome);
     },
     onError: (error) => {
       const message =
@@ -28,11 +35,17 @@ export function useAuth() {
   const loginMutation = useMutation({
     mutationFn: ({ email, password }) =>
       authService.login(email, password),
-    onSuccess: (res) => {
+    onSuccess: async (res) => {
       const { user, accessToken } = res.data.data;
       login(user, accessToken);
+      try {
+        const profileRes = await userService.getProfile();
+        const hasProfiles = profileRes.data.data?.total > 0;
+        navigate(hasProfiles ? ROUTES.dashboard : ROUTES.welcome);
+      } catch {
+        navigate(ROUTES.welcome);
+      }
       toast.success(`Welcome back, ${user.name}!`);
-      navigate(ROUTES.welcome);
     },
     onError: (error) => {
       const message =

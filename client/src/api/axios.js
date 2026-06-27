@@ -1,4 +1,5 @@
 import axios from "axios";
+import toast from "react-hot-toast";
 import { API_URL } from "../constants/api";
 
 const api = axios.create({
@@ -53,6 +54,7 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch {
         localStorage.removeItem("algoryn-auth");
+        toast.error("Session expired. Please login again.");
         window.location.href = "/login";
         return Promise.reject(error);
       }

@@ -35,6 +35,12 @@ const protect = async (req, res, next) => {
         req.user = user;
         next();
     } catch (error) {
+        if (error instanceof jwt.TokenExpiredError) {
+            return next(new ApiError(HTTP_STATUS.UNAUTHORIZED, "Session expired. Please login again."));
+        }
+        if (error instanceof jwt.JsonWebTokenError) {
+            return next(new ApiError(HTTP_STATUS.UNAUTHORIZED, "Invalid session. Please login again."));
+        }
         next(error);
     }
 };
