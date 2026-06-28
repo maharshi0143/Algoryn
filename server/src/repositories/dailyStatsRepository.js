@@ -83,7 +83,7 @@ const setClaimed = async (userId, date) => {
 
 const sumClaimedXP = async (userId) => {
     const result = await db.query(
-        `SELECT COALESCE(SUM(problems_solved * 25), 0) AS total FROM daily_stats WHERE user_id = $1 AND claimed = true`,
+        `SELECT COALESCE(SUM(problems_solved * 5), 0) AS total FROM daily_stats WHERE user_id = $1 AND claimed = true`,
         [userId]
     );
     return Number(result.rows[0]?.total ?? 0);

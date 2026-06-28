@@ -341,7 +341,7 @@ function Dashboard() {
     try {
       const res = await dailyStatsService.populate();
       const solved = res?.data?.data?.problems_solved ?? 0;
-      const xpEarned = solved * 25;
+      const xpEarned = solved * 5;
       toast.success(`+${xpEarned} XP claimed! (${solved} problem${solved !== 1 ? "s" : ""})`);
       refetchStats();
     } catch (err) {
