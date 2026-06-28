@@ -1,4 +1,5 @@
 const notificationService = require("../services/notificationService");
+const notificationRepository = require("../repositories/notificationRepository");
 
 const asyncHandler = require("../utils/asyncHandler");
 const apiResponse = require("../utils/apiResponse");
@@ -36,9 +37,16 @@ const deleteNotification = asyncHandler(async (req, res) => {
     apiResponse(res, HTTP_STATUS.OK, "Notification deleted successfully");
 });
 
+// Get unread notification count for the authenticated user
+const getUnreadCount = asyncHandler(async (req, res) => {
+    const count = await notificationRepository.countUnreadByUserId(req.user.id);
+    apiResponse(res, HTTP_STATUS.OK, "Unread count fetched successfully", { count });
+});
+
 module.exports = {
     sendNotification,
     getNotifications,
     markAsRead,
     deleteNotification,
+    getUnreadCount,
 };

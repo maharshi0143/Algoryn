@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import useUIStore from "../../store/uiStore";
 import { ROUTES } from "../../constants/routes";
 import { platformService } from "../../services/platformService";
+import usePageTitle from "../../hooks/usePageTitle";
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -16,6 +17,7 @@ const steps = [
 ];
 
 function Import() {
+  usePageTitle("Import");
   const navigate = useNavigate();
   const resetOnboarding = useUIStore((state) => state.resetOnboarding);
   const [currentStep, setCurrentStep] = useState(0);

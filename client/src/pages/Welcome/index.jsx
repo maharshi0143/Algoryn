@@ -4,8 +4,10 @@ import useAuthStore from "../../store/authStore";
 import useUIStore from "../../store/uiStore";
 import Button from "../../components/ui/Button";
 import { ROUTES } from "../../constants/routes";
+import usePageTitle from "../../hooks/usePageTitle";
 
 function Welcome() {
+  usePageTitle("Welcome");
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const nextStep = useUIStore((state) => state.nextOnboardingStep);

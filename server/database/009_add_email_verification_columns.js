@@ -1,6 +1,8 @@
 exports.up = async function (knex) {
-    // Columns already added manually in Neon.
-    // Keeping migration for project history.
+    await knex.schema.alterTable("users", (table) => {
+        table.text("verification_token_hash");
+        table.timestamp("verification_token_expires_at");
+    });
 };
 
 exports.down = async function (knex) {

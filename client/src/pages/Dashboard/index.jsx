@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import toast from "react-hot-toast";
 import useAuthStore from "../../store/authStore";
+import usePageTitle from "../../hooks/usePageTitle";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Skeleton from "../../components/ui/Skeleton";
@@ -296,6 +297,7 @@ function useMediaQuery(query) {
 }
 
 function Dashboard() {
+  usePageTitle("Dashboard");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);

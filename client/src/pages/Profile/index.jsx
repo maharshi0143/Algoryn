@@ -5,8 +5,16 @@ import Card from "../../components/ui/Card";
 import Skeleton from "../../components/ui/Skeleton";
 import { PLATFORMS } from "../../services/platformService";
 import { userService } from "../../services/userService";
+import useAuthStore from "../../store/authStore";
+import { ROUTES } from "../../constants/routes";
+import { useNavigate } from "react-router-dom";
+import usePageTitle from "../../hooks/usePageTitle";
 
 function Profile() {
+  usePageTitle("Profile");
+  const navigate = useNavigate();
+  const logout = useAuthStore((s) => s.logout);
+
   const [profiles, setProfiles] = useState([]);
   const [usernames, setUsernames] = useState({});
   const [loading, setLoading] = useState(true);
@@ -135,18 +143,36 @@ function Profile() {
       transition={{ duration: 0.3 }}
       style={{ paddingBottom: "32px" }}
     >
-      <h1 style={{
-        fontFamily: "var(--font-heading)", fontWeight: 700,
-        fontSize: "26px", margin: "0 0 8px", color: "var(--color-dark)",
-      }}>
-        👤 Profile
-      </h1>
-      <p style={{
-        fontFamily: "var(--font-body)", fontSize: "14px",
-        color: "#666", margin: "0 0 24px",
-      }}>
-        Manage your connected coding platforms.
-      </p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px" }}>
+        <div>
+          <h1 style={{
+            fontFamily: "var(--font-heading)", fontWeight: 700,
+            fontSize: "26px", margin: "0 0 8px", color: "var(--color-dark)",
+          }}>
+            👤 Profile
+          </h1>
+          <p style={{
+            fontFamily: "var(--font-body)", fontSize: "14px",
+            color: "#666", margin: 0,
+          }}>
+            Manage your connected coding platforms.
+          </p>
+        </div>
+        <button
+          onClick={() => { logout(); navigate(ROUTES.landing); }}
+          style={{
+            padding: "8px 16px", borderRadius: "10px",
+            border: "2px solid #000",
+            background: "#FF4757",
+            boxShadow: "3px 3px 0 #000",
+            fontFamily: "var(--font-heading)", fontWeight: 700,
+            fontSize: "12px", color: "#fff",
+            cursor: "pointer", whiteSpace: "nowrap",
+          }}
+        >
+          Logout
+        </button>
+      </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
         {PLATFORMS.map((platform) => {
@@ -185,13 +211,13 @@ function Profile() {
                 placeholder="username"
                 value={usernames[platform.id] || ""}
                 onChange={(e) => handleUsernameChange(platform.id, e.target.value)}
-                disabled={isConnected}
+                disabled={isConnected && editing !== platform.id}
                 style={{
                   flex: 1, padding: "8px 12px", borderRadius: "10px",
                   border: "2px solid #000",
                   fontFamily: "var(--font-body)", fontSize: "13px",
                   outline: "none",
-                  background: isConnected ? "#F0F0F0" : "#fff",
+                  background: isConnected && editing !== platform.id ? "#F0F0F0" : "#fff",
                 }}
               />
               {isConnected ? (

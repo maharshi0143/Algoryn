@@ -6,6 +6,7 @@ import Card from "../../components/ui/Card";
 import Skeleton from "../../components/ui/Skeleton";
 import Button from "../../components/ui/Button";
 import { contestService } from "../../services/contestService";
+import usePageTitle from "../../hooks/usePageTitle";
 
 function RatingGraph({ data, height = 200 }) {
   const containerRef = useRef(null);
@@ -75,6 +76,7 @@ function Countdown({ startTime }) {
 }
 
 function Contests() {
+  usePageTitle("Contests");
   const [page, setPage] = useState(1);
   const [syncing, setSyncing] = useState(false);
 

@@ -27,6 +27,15 @@ const countByUserId = async (userId) => {
     return result.rows[0].count;
 };
 
+// Count unread notifications for a user
+const countUnreadByUserId = async (userId) => {
+    const result = await db.query(
+        `SELECT COUNT(*)::int AS count FROM notifications WHERE user_id = $1 AND is_read = FALSE`,
+        [userId]
+    );
+    return result.rows[0].count;
+};
+
 // Find a single notification by its ID
 const findNotificationById = async (notificationId) => {
     const result = await db.query(
@@ -63,6 +72,7 @@ module.exports = {
     createNotification,
     findNotificationsByUserId,
     countByUserId,
+    countUnreadByUserId,
     findNotificationById,
     findByUserIdAndTypeSince,
     markAsRead,

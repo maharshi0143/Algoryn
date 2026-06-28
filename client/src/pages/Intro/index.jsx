@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import useUIStore from "../../store/uiStore";
 import Button from "../../components/ui/Button";
 import { ROUTES } from "../../constants/routes";
+import usePageTitle from "../../hooks/usePageTitle";
 
 const cards = [
   {
@@ -35,6 +36,7 @@ const cardVariants = {
 };
 
 function Intro() {
+  usePageTitle("Intro");
   const navigate = useNavigate();
   const nextStep = useUIStore((state) => state.nextOnboardingStep);
   const prevStep = useUIStore((state) => state.prevOnboardingStep);

@@ -18,7 +18,7 @@ const registerUser = async (name, email, password) => {
         throw new ApiError(HTTP_STATUS.CONFLICT, "User already exists");
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     const user = await userRepository.createUser(name, email, hashedPassword);
 
@@ -120,12 +120,12 @@ const refreshUserToken = async (refreshToken) => {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
-    await refreshTokenRepository.saveRefreshToken(decoded.userId, newRefreshToken, expiresAt);
     try {
         await refreshTokenRepository.deleteRefreshToken(refreshToken);
     } catch (error) {
         logger.error("Failed to delete old refresh token", error);
     }
+    await refreshTokenRepository.saveRefreshToken(decoded.userId, newRefreshToken, expiresAt);
 
     return {
         accessToken,
@@ -146,7 +146,7 @@ const changePassword = async (userId, currentPassword, newPassword) => {
         throw new ApiError(HTTP_STATUS.UNAUTHORIZED, "Current password is incorrect");
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
 
     await userRepository.updatePassword(userId, hashedPassword);
 };

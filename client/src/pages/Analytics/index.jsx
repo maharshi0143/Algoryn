@@ -6,6 +6,7 @@ import Skeleton from "../../components/ui/Skeleton";
 import Tabs from "../../components/ui/Tabs";
 import { analyticsService, ANALYTICS_QUERY_KEY } from "../../services/analyticsService";
 import { PLATFORMS } from "../../services/platformService";
+import usePageTitle from "../../hooks/usePageTitle";
 
 function AnimatedNumber({ value, suffix = "" }) {
   const [display, setDisplay] = useState(0);
@@ -145,6 +146,7 @@ const sectionTitleStyle = {
 };
 
 function Analytics() {
+  usePageTitle("Analytics");
   const isMobile = useMediaQuery("(max-width: 1024px)");
 
   const { data: platformsData, isLoading: platformsLoading } = useQuery({
@@ -296,9 +298,10 @@ function Analytics() {
             <StatCard
               key={p.id}
               icon={<p.icon />}
-              value={match?.total_solved || 0}
+              value={p.id === "hackerrank" ? (match?.skills?.length || 0) : (match?.total_solved || 0)}
               label={p.name}
               color={p.color}
+              suffix={p.id === "hackerrank" ? " skills" : ""}
             />
           );
         })}

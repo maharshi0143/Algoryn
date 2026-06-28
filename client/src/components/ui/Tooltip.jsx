@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "../../utils/cn";
 
@@ -25,14 +25,18 @@ function Tooltip({
   ...props
 }) {
   const [visible, setVisible] = useState(false);
-  let timeout = null;
+  const timeoutRef = useRef(null);
+
+  useEffect(() => {
+    return () => clearTimeout(timeoutRef.current);
+  }, []);
 
   const handleMouseEnter = () => {
-    timeout = setTimeout(() => setVisible(true), delay);
+    timeoutRef.current = setTimeout(() => setVisible(true), delay);
   };
 
   const handleMouseLeave = () => {
-    clearTimeout(timeout);
+    clearTimeout(timeoutRef.current);
     setVisible(false);
   };
 

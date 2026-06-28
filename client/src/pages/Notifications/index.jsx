@@ -7,6 +7,7 @@ import Skeleton from "../../components/ui/Skeleton";
 import Button from "../../components/ui/Button";
 import { notificationService } from "../../services/notificationService";
 import { useSocketNotification } from "../../hooks/useSocketNotification";
+import usePageTitle from "../../hooks/usePageTitle";
 
 const TYPE_COLORS = {
   achievement: "#FFD93D",
@@ -18,6 +19,7 @@ const TYPE_COLORS = {
 };
 
 function Notifications() {
+  usePageTitle("Notifications");
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
 

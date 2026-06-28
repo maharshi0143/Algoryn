@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Card from "../../components/ui/Card";
 import Skeleton from "../../components/ui/Skeleton";
 import { aiService } from "../../services/aiService";
+import usePageTitle from "../../hooks/usePageTitle";
 
 const TABS = [
   { key: "insights", label: "Insights" },
@@ -25,6 +26,7 @@ function TabButton({ active, children, onClick }) {
 }
 
 function AICoach() {
+  usePageTitle("AI Coach");
   const [tab, setTab] = useState("insights");
 
   const { data, isLoading } = useQuery({

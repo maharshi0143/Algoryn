@@ -6,6 +6,7 @@ import Card from "../../components/ui/Card";
 import Skeleton from "../../components/ui/Skeleton";
 import Button from "../../components/ui/Button";
 import { achievementService } from "../../services/achievementService";
+import usePageTitle from "../../hooks/usePageTitle";
 
 const ACHIEVEMENT_BG = {
   problem: "linear-gradient(135deg, #FFF3CD, #FFE5A0)",
@@ -15,11 +16,14 @@ const ACHIEVEMENT_BG = {
 };
 
 function Achievements() {
+  usePageTitle("Achievements");
   const [checking, setChecking] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["achievements"],
     queryFn: achievementService.getAll,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   const achievements = data?.data?.data || [];

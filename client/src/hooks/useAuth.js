@@ -14,16 +14,8 @@ export function useAuth() {
     mutationFn: ({ name, email, password }) =>
       authService.register(name, email, password),
     onSuccess: async (res) => {
-      const { user: userData, accessToken } = res.data.data;
-      login(userData, accessToken);
-      try {
-        const profileRes = await userService.getProfile();
-        const hasProfiles = profileRes.data.data?.total > 0;
-        navigate(hasProfiles ? ROUTES.dashboard : ROUTES.welcome);
-      } catch {
-        navigate(ROUTES.welcome);
-      }
-      toast.success(`Welcome, ${userData.name}!`);
+      navigate(ROUTES.login);
+      toast.success("Account created! Please log in.");
     },
     onError: (error) => {
       const message =

@@ -6,8 +6,10 @@ import Card from "../../components/ui/Card";
 import Skeleton from "../../components/ui/Skeleton";
 import Button from "../../components/ui/Button";
 import { goalService } from "../../services/goalService";
+import usePageTitle from "../../hooks/usePageTitle";
 
 function Goals() {
+  usePageTitle("Goals");
   const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [target, setTarget] = useState("");

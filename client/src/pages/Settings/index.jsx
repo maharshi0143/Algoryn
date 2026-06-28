@@ -7,7 +7,8 @@ import Button from "../../components/ui/Button";
 import { emailPreferenceService } from "../../services/emailPreferenceService";
 import useAuthStore from "../../store/authStore";
 import { ROUTES } from "../../constants/routes";
-import { API_URL } from "../../constants/api";
+import api from "../../api/axios";
+import usePageTitle from "../../hooks/usePageTitle";
 
 function Toggle({ label, checked, onChange }) {
   return (
@@ -30,6 +31,7 @@ function Toggle({ label, checked, onChange }) {
 }
 
 function Settings() {
+  usePageTitle("Settings");
   const navigate = useNavigate();
   const logout = useAuthStore((s) => s.logout);
   const user = useAuthStore((s) => s.user);
@@ -44,6 +46,20 @@ function Settings() {
 
   const [confirmDelete, setConfirmDelete] = useState("");
   const [deleting, setDeleting] = useState(false);
+
+  const handleExport = async (format) => {
+    try {
+      const res = await api.get(`/export/${format}`, { responseType: "blob" });
+      const url = URL.createObjectURL(res.data);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Algoryn_Report.${format}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error(err.response?.data?.message || `Failed to export ${format.toUpperCase()}`);
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -166,18 +182,18 @@ function Settings() {
           Export Data
         </h3>
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-          <a href={`${API_URL}/export/json`} target="_blank" rel="noreferrer"
-            style={{ padding: "8px 16px", borderRadius: "10px", border: "2px solid #000", background: "#FFD93D", boxShadow: "3px 3px 0 #000", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "12px", textDecoration: "none", color: "var(--color-dark)" }}>
+          <button onClick={() => handleExport("json")}
+            style={{ padding: "8px 16px", borderRadius: "10px", border: "2px solid #000", background: "#FFD93D", boxShadow: "3px 3px 0 #000", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "12px", cursor: "pointer", color: "var(--color-dark)" }}>
             Export JSON
-          </a>
-          <a href={`${API_URL}/export/pdf`} target="_blank" rel="noreferrer"
-            style={{ padding: "8px 16px", borderRadius: "10px", border: "2px solid #000", background: "#FFD93D", boxShadow: "3px 3px 0 #000", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "12px", textDecoration: "none", color: "var(--color-dark)" }}>
+          </button>
+          <button onClick={() => handleExport("pdf")}
+            style={{ padding: "8px 16px", borderRadius: "10px", border: "2px solid #000", background: "#FFD93D", boxShadow: "3px 3px 0 #000", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "12px", cursor: "pointer", color: "var(--color-dark)" }}>
             Export PDF
-          </a>
-          <a href={`${API_URL}/export/png`} target="_blank" rel="noreferrer"
-            style={{ padding: "8px 16px", borderRadius: "10px", border: "2px solid #000", background: "#FFD93D", boxShadow: "3px 3px 0 #000", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "12px", textDecoration: "none", color: "var(--color-dark)" }}>
+          </button>
+          <button onClick={() => handleExport("png")}
+            style={{ padding: "8px 16px", borderRadius: "10px", border: "2px solid #000", background: "#FFD93D", boxShadow: "3px 3px 0 #000", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "12px", cursor: "pointer", color: "var(--color-dark)" }}>
             Export PNG
-          </a>
+          </button>
         </div>
       </Card>
 

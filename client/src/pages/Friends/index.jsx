@@ -6,8 +6,10 @@ import Card from "../../components/ui/Card";
 import Skeleton from "../../components/ui/Skeleton";
 import Button from "../../components/ui/Button";
 import { friendService } from "../../services/friendService";
+import usePageTitle from "../../hooks/usePageTitle";
 
 function Friends() {
+  usePageTitle("Friends");
   const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
   const [tab, setTab] = useState("friends");

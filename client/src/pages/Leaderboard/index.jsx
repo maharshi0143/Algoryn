@@ -5,6 +5,7 @@ import Card from "../../components/ui/Card";
 import Skeleton from "../../components/ui/Skeleton";
 import { PLATFORMS } from "../../services/platformService";
 import { leaderboardService } from "../../services/leaderboardService";
+import usePageTitle from "../../hooks/usePageTitle";
 
 const TABS = [
   { id: "global", label: "Global" },
@@ -64,6 +65,7 @@ function LeaderboardRow({ rank, name, avatar, solved, streak, contributions, isU
 }
 
 function Leaderboard() {
+  usePageTitle("Leaderboard");
   const [tab, setTab] = useState("global");
   const [platform, setPlatform] = useState("");
   const [page, setPage] = useState(1);

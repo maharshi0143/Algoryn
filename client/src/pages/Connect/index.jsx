@@ -7,8 +7,10 @@ import Button from "../../components/ui/Button";
 import { PLATFORMS } from "../../services/platformService";
 import { userService } from "../../services/userService";
 import { ROUTES } from "../../constants/routes";
+import usePageTitle from "../../hooks/usePageTitle";
 
 function Connect() {
+  usePageTitle("Connect");
   const navigate = useNavigate();
   const nextStep = useUIStore((state) => state.nextOnboardingStep);
   const prevStep = useUIStore((state) => state.prevOnboardingStep);

@@ -42,19 +42,21 @@ const syncGithub = async (userId) => {
         }
     });
 
-    const existingStats = await githubStatsRepository.findGithubStats(profile.id);
+    const existingGithubStats = await githubStatsRepository.findGithubStats(profile.id);
+    const existingProblemStats = await problemStatsRepository.findProblemStatsByProfileId(profile.id);
 
     const sendNotif = () => notificationService.sendNotification(userId, "sync", "GitHub synced successfully")
         .catch(err => logger.error("Sync notification failed", err));
 
     const today = new Date();
 
-    if (!existingStats) {
+    if (!existingGithubStats) {
         const stats = await githubStatsRepository.createGithubStats(
             profile.id, githubProfile.public_repos, githubProfile.followers,
             githubProfile.following, totalStars, contributions, languages
         );
         await dailyStatsRepository.upsertDailyStats(userId, today, 0, 0, 0, 0, contributions);
+        await problemStatsRepository.createProblemStats(profile.id, contributions, 0, 0, 0, 0, totalStars, 0);
         await sendNotif();
         return stats;
     }
@@ -65,6 +67,10 @@ const syncGithub = async (userId) => {
     );
 
     await dailyStatsRepository.upsertDailyStats(userId, today, 0, 0, 0, 0, contributions);
+    await problemStatsRepository.updateProblemStats(
+        profile.id, contributions,
+        0, 0, 0, 0, totalStars, existingProblemStats?.streak ?? 0
+    );
     await sendNotif();
 
     return stats;
@@ -192,10 +198,12 @@ const syncCodeChef = async (userId) => {
     const data = await fetchCodeChefProfile(profile.username);
 
     const codechefRating = data.profile?.currentRating || 0;
+    const starStr = data.profile?.stars || "unrated";
+    const starRating = parseInt(starStr) || 0;
     const existingStats = await problemStatsRepository.findProblemStatsByProfileId(profile.id);
 
     if (!existingStats) {
-        const stats = await problemStatsRepository.createProblemStats(profile.id, 0, 0, 0, 0, codechefRating, 0, 0);
+        const stats = await problemStatsRepository.createProblemStats(profile.id, 0, 0, 0, 0, codechefRating, starRating, 0);
         notificationService.sendNotification(userId, "sync", "CodeChef synced successfully").catch(err => logger.error("Sync notification failed", err));
         return stats;
     }
@@ -203,7 +211,7 @@ const syncCodeChef = async (userId) => {
     const stats = await problemStatsRepository.updateProblemStats(
         profile.id, existingStats.total_solved,
         existingStats.easy_count, existingStats.medium_count, existingStats.hard_count,
-        codechefRating, existingStats.ranking, existingStats.streak
+        codechefRating, starRating, existingStats.streak
     );
 
     notificationService.sendNotification(userId, "sync", "CodeChef synced successfully").catch(err => logger.error("Sync notification failed", err));

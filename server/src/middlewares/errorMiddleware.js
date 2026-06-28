@@ -21,6 +21,11 @@ const errorMiddleware = (err, req, res, next) => {
 
     if (statusCode >= 500) {
         logger.error(err.stack || err.message);
+        return res.status(statusCode).json({
+            success: false,
+            data: null,
+            message: process.env.NODE_ENV === "production" ? "Internal Server Error" : err.message,
+        });
     }
 
     res.status(statusCode).json({

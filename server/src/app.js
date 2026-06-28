@@ -46,7 +46,20 @@ const errorMiddleware = require('./middlewares/errorMiddleware');
 const app = express();
 
 app.set("trust proxy", 1);
-app.use(helmet());
+const cspDirectives = {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+    styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+    fontSrc: ["'self'", "https://fonts.gstatic.com"],
+    imgSrc: ["'self'", "data:", "https:"],
+    connectSrc: ["'self'", ...(process.env.CLIENT_URL || "http://localhost:5173").split(",").map(s => s.trim())],
+};
+
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: cspDirectives,
+    },
+}));
 
 const allowedOrigins = process.env.CLIENT_URL
     ? process.env.CLIENT_URL.split(",").map(s => s.trim())

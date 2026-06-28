@@ -2,26 +2,38 @@ exports.up = async (knex) => {
     await knex.raw(`CREATE EXTENSION IF NOT EXISTS "pgcrypto"`);
 
     await knex.raw(`
-        CREATE TYPE platform_type AS ENUM(
-            'leetcode', 'github', 'codechef', 'codeforces', 'gfg', 'hackerrank'
-        )
+        DO $$ BEGIN
+            CREATE TYPE platform_type AS ENUM(
+                'leetcode', 'github', 'codechef', 'codeforces', 'gfg', 'hackerrank'
+            );
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$;
     `);
 
     await knex.raw(`
-        CREATE TYPE notification_type AS ENUM(
-            'achievement', 'contest', 'weekly_report', 'streak', 'sync', 'friend'
-        )
+        DO $$ BEGIN
+            CREATE TYPE notification_type AS ENUM(
+                'achievement', 'contest', 'weekly_report', 'streak', 'sync', 'friend'
+            );
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$;
     `);
 
     await knex.raw(`
-        CREATE TYPE achievement_type AS ENUM('streak', 'problem', 'contest', 'contribution')
+        DO $$ BEGIN
+            CREATE TYPE achievement_type AS ENUM('streak', 'problem', 'contest', 'contribution');
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$;
     `);
 
     await knex.raw(`
-        CREATE TYPE friend_status AS ENUM('pending', 'accepted', 'rejected', 'blocked')
+        DO $$ BEGIN
+            CREATE TYPE friend_status AS ENUM('pending', 'accepted', 'rejected', 'blocked');
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$;
     `);
 
-    await knex.schema.createTable("users", (table) => {
+    await knex.schema.createTableIfNotExists("users", (table) => {
         table.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
         table.string("name", 100).notNullable();
         table.string("email", 255).notNullable().unique();
@@ -35,7 +47,7 @@ exports.up = async (knex) => {
         table.index("email");
     });
 
-    await knex.schema.createTable("refresh_tokens", (table) => {
+    await knex.schema.createTableIfNotExists("refresh_tokens", (table) => {
         table.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
         table.uuid("user_id").notNullable().references("id").inTable("users").onDelete("CASCADE");
         table.text("token").notNullable();
@@ -44,7 +56,7 @@ exports.up = async (knex) => {
         table.index("user_id");
     });
 
-    await knex.schema.createTable("coding_profiles", (table) => {
+    await knex.schema.createTableIfNotExists("coding_profiles", (table) => {
         table.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
         table.uuid("user_id").notNullable().references("id").inTable("users").onDelete("CASCADE");
         table.specificType("platform", "platform_type").notNullable();
@@ -58,7 +70,7 @@ exports.up = async (knex) => {
         table.index("platform");
     });
 
-    await knex.schema.createTable("problem_stats", (table) => {
+    await knex.schema.createTableIfNotExists("problem_stats", (table) => {
         table.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
         table.uuid("profile_id").notNullable().unique().references("id").inTable("coding_profiles").onDelete("CASCADE");
         table.integer("total_solved").defaultTo(0);
@@ -72,7 +84,7 @@ exports.up = async (knex) => {
         table.timestamp("updated_at").defaultTo(knex.fn.now());
     });
 
-    await knex.schema.createTable("github_stats", (table) => {
+    await knex.schema.createTableIfNotExists("github_stats", (table) => {
         table.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
         table.uuid("profile_id").notNullable().unique().references("id").inTable("coding_profiles").onDelete("CASCADE");
         table.integer("repositories").defaultTo(0);
@@ -86,7 +98,7 @@ exports.up = async (knex) => {
         table.timestamp("updated_at").defaultTo(knex.fn.now());
     });
 
-    await knex.schema.createTable("daily_stats", (table) => {
+    await knex.schema.createTableIfNotExists("daily_stats", (table) => {
         table.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
         table.uuid("user_id").notNullable().references("id").inTable("users").onDelete("CASCADE");
         table.date("date").notNullable();
@@ -102,7 +114,7 @@ exports.up = async (knex) => {
         table.index("date");
     });
 
-    await knex.schema.createTable("contest_history", (table) => {
+    await knex.schema.createTableIfNotExists("contest_history", (table) => {
         table.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
         table.uuid("profile_id").notNullable().references("id").inTable("coding_profiles").onDelete("CASCADE");
         table.string("contest_name", 255).notNullable();
@@ -114,7 +126,7 @@ exports.up = async (knex) => {
         table.index("contest_date");
     });
 
-    await knex.schema.createTable("achievements", (table) => {
+    await knex.schema.createTableIfNotExists("achievements", (table) => {
         table.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
         table.uuid("user_id").notNullable().references("id").inTable("users").onDelete("CASCADE");
         table.specificType("type", "achievement_type").notNullable();
@@ -126,7 +138,7 @@ exports.up = async (knex) => {
         table.index("user_id");
     });
 
-    await knex.schema.createTable("notifications", (table) => {
+    await knex.schema.createTableIfNotExists("notifications", (table) => {
         table.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
         table.uuid("user_id").notNullable().references("id").inTable("users").onDelete("CASCADE");
         table.specificType("type", "notification_type").notNullable();
@@ -138,7 +150,7 @@ exports.up = async (knex) => {
         table.index("is_read");
     });
 
-    await knex.schema.createTable("goals", (table) => {
+    await knex.schema.createTableIfNotExists("goals", (table) => {
         table.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
         table.uuid("user_id").notNullable().references("id").inTable("users").onDelete("CASCADE");
         table.integer("target").notNullable();
@@ -151,7 +163,7 @@ exports.up = async (knex) => {
         table.index(["month", "year"]);
     });
 
-    await knex.schema.createTable("friends", (table) => {
+    await knex.schema.createTableIfNotExists("friends", (table) => {
         table.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
         table.uuid("user_id").notNullable().references("id").inTable("users").onDelete("CASCADE");
         table.uuid("friend_id").notNullable().references("id").inTable("users").onDelete("CASCADE");
@@ -162,7 +174,7 @@ exports.up = async (knex) => {
         table.index("friend_id");
     });
 
-    await knex.schema.createTable("activity_logs", (table) => {
+    await knex.schema.createTableIfNotExists("activity_logs", (table) => {
         table.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
         table.uuid("user_id").notNullable().references("id").inTable("users").onDelete("CASCADE");
         table.string("action", 255).notNullable();
@@ -171,7 +183,7 @@ exports.up = async (knex) => {
         table.index("user_id");
     });
 
-    await knex.schema.createTable("email_preferences", (table) => {
+    await knex.schema.createTableIfNotExists("email_preferences", (table) => {
         table.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
         table.uuid("user_id").notNullable().unique().references("id").inTable("users").onDelete("CASCADE");
         table.boolean("weekly_report").defaultTo(true);
@@ -182,7 +194,7 @@ exports.up = async (knex) => {
         table.timestamp("updated_at").defaultTo(knex.fn.now());
     });
 
-    await knex.schema.createTable("contest_reminders", (table) => {
+    await knex.schema.createTableIfNotExists("contest_reminders", (table) => {
         table.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
         table.uuid("user_id").notNullable().references("id").inTable("users").onDelete("CASCADE");
         table.specificType("platform", "platform_type").notNullable();
@@ -193,7 +205,7 @@ exports.up = async (knex) => {
         table.index("is_active");
     });
 
-    await knex.schema.createTable("weekly_reports", (table) => {
+    await knex.schema.createTableIfNotExists("weekly_reports", (table) => {
         table.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
         table.uuid("user_id").notNullable().references("id").inTable("users").onDelete("CASCADE");
         table.date("week_start").notNullable();
@@ -223,9 +235,13 @@ exports.up = async (knex) => {
 
     for (const table of tablesWithUpdatedAt) {
         await knex.raw(`
-            CREATE TRIGGER ${table}_updated_at
-            BEFORE UPDATE ON ${table}
-            FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()
+            DO $$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = '${table}_updated_at') THEN
+                    CREATE TRIGGER ${table}_updated_at
+                    BEFORE UPDATE ON ${table}
+                    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+                END IF;
+            END $$;
         `);
     }
 };

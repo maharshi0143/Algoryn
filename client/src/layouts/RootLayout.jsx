@@ -1,11 +1,28 @@
+import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ROUTES } from "../constants/routes";
+import { notificationService } from "../services/notificationService";
 
 function RootLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const isActive = (path) => location.pathname === path;
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        const res = await notificationService.getUnreadCount();
+        setUnreadCount(res.data?.data?.count ?? 0);
+      } catch {
+        // ignore
+      }
+    };
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 30000);
+    return () => clearInterval(interval);
+  }, []);
   return (
     <div
       style={{
@@ -51,7 +68,22 @@ function RootLayout() {
           <SidebarItem icon="🤖" label="AI Coach" active={isActive(ROUTES.aiCoach)} onClick={() => navigate(ROUTES.aiCoach)} />
         </nav>
         <div style={{ borderTop: "3px solid #000", paddingTop: "16px" }}>
-          <SidebarItem icon="🔔" label="Notifications" active={isActive(ROUTES.notifications)} onClick={() => navigate(ROUTES.notifications)} />
+          <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+            <div style={{ flex: 1 }}>
+              <SidebarItem icon="🔔" label="Notifications" active={isActive(ROUTES.notifications)} onClick={() => navigate(ROUTES.notifications)} />
+            </div>
+            {unreadCount > 0 && (
+              <span style={{
+                position: "absolute", right: 0, top: "50%", transform: "translateY(-50%)",
+                background: "#FF4757", color: "#fff", borderRadius: "50%",
+                minWidth: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center",
+                fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "11px",
+                border: "2px solid #000", lineHeight: 1,
+              }}>
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+          </div>
           <SidebarItem icon="👥" label="Friends" active={isActive(ROUTES.friends)} onClick={() => navigate(ROUTES.friends)} />
           <SidebarItem icon="🎯" label="Goals" active={isActive(ROUTES.goals)} onClick={() => navigate(ROUTES.goals)} />
           <SidebarItem icon="👤" label="Profile" active={isActive(ROUTES.profile)} onClick={() => navigate(ROUTES.profile)} />
@@ -75,7 +107,10 @@ function RootLayout() {
 function SidebarItem({ icon, label, active, onClick }) {
   return (
     <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
       style={{
         display: "flex",
         alignItems: "center",
