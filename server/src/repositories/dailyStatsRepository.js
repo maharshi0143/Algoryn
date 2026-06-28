@@ -61,11 +61,29 @@ const findByUserAndDate = async (userId, date) => {
     return result.rows[0];
 };
 
+const setClaimed = async (userId, date) => {
+    const result = await db.query(
+        `UPDATE daily_stats SET claimed = true WHERE user_id = $1 AND date = $2 RETURNING *`,
+        [userId, date]
+    );
+    return result.rows[0];
+};
+
+const sumClaimedXP = async (userId) => {
+    const result = await db.query(
+        `SELECT COALESCE(SUM(problems_solved * 25), 0) AS total FROM daily_stats WHERE user_id = $1 AND claimed = true`,
+        [userId]
+    );
+    return Number(result.rows[0]?.total ?? 0);
+};
+
 module.exports = {
     findWeeklyStats,
     findMonthlyStats,
     findHeatmapStats,
     upsertDailyStats,
     findByUserAndDate,
+    setClaimed,
+    sumClaimedXP,
 };
 

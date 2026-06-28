@@ -87,7 +87,7 @@ function SidebarItem({ icon, label, active, onClick }) {
         boxShadow: active ? "4px 4px 0 #000" : "none",
         cursor: "pointer",
         fontFamily: "'Inter', sans-serif",
-        fontWeight: active ? 600 : 400,
+        fontWeight: 600,
         fontSize: "15px",
         transition: "all 0.2s",
         color: "#121212",

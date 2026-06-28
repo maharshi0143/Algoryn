@@ -2,12 +2,16 @@ const problemStatsRepository = require("../repositories/problemStatsRepository")
 const githubStatsRepository = require("../repositories/githubStatsRepository");
 const dailyStatsRepository = require("../repositories/dailyStatsRepository");
 
-// Get overview stats combining problem and GitHub data
+// Get overview stats combining problem, GitHub data, XP, and daily claim status
 const getOverview = async (userId) => {
-    const [problemStats, githubStats] = await Promise.all([
+    const [problemStats, githubStats, totalXP] = await Promise.all([
         problemStatsRepository.findProblemStatsByUserId(userId),
         githubStatsRepository.findGithubStatsByUserId(userId),
+        dailyStatsRepository.sumClaimedXP(userId),
     ]);
+
+    const today = new Date().toISOString().split("T")[0];
+    const todayStats = await dailyStatsRepository.findByUserAndDate(userId, today);
 
     return {
         totalSolved: Number(problemStats?.total_solved ?? 0),
@@ -18,6 +22,9 @@ const getOverview = async (userId) => {
         repositories: Number(githubStats?.repositories ?? 0),
         followers: Number(githubStats?.followers ?? 0),
         contributions: Number(githubStats?.contributions ?? 0),
+        today_solved: Number(todayStats?.problems_solved ?? 0),
+        claimed: Boolean(todayStats?.claimed ?? false),
+        total_xp: totalXP,
     };
 };
 

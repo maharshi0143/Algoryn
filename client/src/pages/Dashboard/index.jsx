@@ -9,8 +9,6 @@ import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Skeleton from "../../components/ui/Skeleton";
 import { dashboardService, DASHBOARD_QUERY_KEY } from "../../services/dashboardService";
-import { contestService } from "../../services/contestService";
-
 import { platformService } from "../../services/platformService";
 import { activityLogService } from "../../services/activityLogService";
 import { dailyStatsService } from "../../services/dailyStatsService";
@@ -69,32 +67,34 @@ function GreetingBanner({ name, onSync, syncing }) {
   );
 }
 
-function AIMiniWidget({ onClaimXp, claiming, claimed }) {
+function AIMiniWidget({ onClaimXp, claiming, claimed, todaySolved }) {
+  const canClaim = todaySolved > 0 && !claimed;
   return (
     <Card padding="md" style={{
       marginBottom: "24px",
       background: claimed ? "#E8FFE8" : "linear-gradient(135deg, #FFF3CD 0%, #FFE5A0 100%)",
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-        <span style={{ fontSize: "28px" }}>{claimed ? "✅" : "🧠"}</span>
+        <span style={{ fontSize: "28px" }}>{claimed ? "✅" : todaySolved > 0 ? "🧠" : "📡"}</span>
         <div style={{ flex: 1 }}>
           <p style={{
             fontFamily: "var(--font-heading)", fontWeight: 700,
             fontSize: "15px", margin: "0 0 2px", color: "var(--color-dark)",
           }}>
-            Today's Mission
+            {claimed ? "Today's XP Claimed!" : todaySolved > 0 ? "Today's Mission" : "Sync Your Progress"}
           </p>
           <p style={{
             fontFamily: "var(--font-body)", fontSize: "13px",
             margin: 0, color: "#665",
           }}>
-            {claimed ? "Great work! Come back tomorrow for more." : <>Solve 2 Graph problems  <span style={{
-              fontFamily: "var(--font-mono)", fontWeight: 600,
-              color: "#6BCB77", fontSize: "14px",
-            }}>+250 XP</span></>}
+            {claimed
+              ? `Great work! You earned XP for ${todaySolved} problem${todaySolved !== 1 ? "s" : ""} solved today.`
+              : todaySolved > 0
+                ? <>You solved <strong>{todaySolved}</strong> problem{todaySolved !== 1 ? "s" : ""} today — claim your XP!</>
+                : "Sync your coding platforms to track daily progress and earn XP."}
           </p>
         </div>
-        {!claimed && (
+        {canClaim && (
           <div
             onClick={onClaimXp}
             style={{
@@ -253,82 +253,6 @@ function ActivityFeed({ activities }) {
   );
 }
 
-function UpcomingContestsCard({ contests }) {
-  if (!contests || contests.length === 0) {
-    return (
-      <div style={{
-        textAlign: "center", padding: "24px 0",
-        fontFamily: "var(--font-body)", fontSize: "13px", color: "#aaa",
-      }}>
-        No upcoming contests
-      </div>
-    );
-  }
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-      {contests.slice(0, 4).map((contest, i) => {
-        const startTime = contest.startTimeSeconds
-          ? new Date(contest.startTimeSeconds * 1000)
-          : contest.start_time ? parseISO(contest.start_time) : null;
-        return (
-          <motion.div
-            key={contest.id || i}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.06, duration: 0.3 }}
-            style={{
-              display: "flex", alignItems: "center", gap: "10px",
-              padding: "10px 12px",
-              background: "#F8F8F8",
-              borderRadius: "12px", border: "2px solid #E8E8E8",
-            }}
-          >
-            <span style={{
-              fontSize: "20px", width: 28, textAlign: "center",
-            }}>
-              ⚡
-            </span>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{
-                fontFamily: "var(--font-heading)", fontWeight: 600,
-                fontSize: "13px", margin: 0, color: "#121212",
-                whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-              }}>
-                {contest.contest_name || contest.name || "Codeforces Round"}
-              </p>
-              {startTime && (
-                <p style={{
-                  fontFamily: "var(--font-mono)", fontSize: "11px",
-                  margin: "2px 0 0", color: "#888",
-                }}>
-                  {format(startTime, "MMM d, HH:mm")} ({contest.durationSeconds
-                    ? `${Math.round(contest.durationSeconds / 3600)}h`
-                    : ""})
-                </p>
-              )}
-            </div>
-            <span style={{
-              fontFamily: "var(--font-mono)", fontWeight: 700,
-              fontSize: "11px", color: "#4D96FF",
-              whiteSpace: "nowrap",
-            }}>
-              {startTime ? (() => {
-                const diff = startTime.getTime() - Date.now();
-                const days = Math.floor(diff / 86400000);
-                const hours = Math.floor((diff % 86400000) / 3600000);
-                if (days > 0) return `${days}d ${hours}h`;
-                if (hours > 0) return `${hours}h`;
-                return "Soon";
-              })() : ""}
-            </span>
-          </motion.div>
-        );
-      })}
-    </div>
-  );
-}
-
 function EmptyState({ onConnect }) {
   return (
     <Card padding="lg" style={{ textAlign: "center", marginTop: "24px" }}>
@@ -378,7 +302,6 @@ function Dashboard() {
   const isMobile = useMediaQuery("(max-width: 1024px)");
   const [syncing, setSyncing] = useState(false);
   const [claiming, setClaiming] = useState(false);
-  const [claimed, setClaimed] = useState(false);
   const [activityData, setActivityData] = useState(null);
 
   const { data: statsData, isLoading: statsLoading, isError: statsError, error: statsErr, refetch: refetchStats } = useQuery({
@@ -389,12 +312,6 @@ function Dashboard() {
   const { data: heatmapData } = useQuery({
     queryKey: ["dashboardHeatmap"],
     queryFn: dashboardService.getHeatmap,
-  });
-
-  const { data: contestsData } = useQuery({
-    queryKey: ["upcomingContests"],
-    queryFn: contestService.getUpcomingContests,
-    staleTime: 300000,
   });
 
   useEffect(() => {
@@ -412,10 +329,11 @@ function Dashboard() {
   const stats = statsData?.data?.data;
   const isEmpty = stats && Object.values(stats).every((v) => v === 0);
   const heatmap = heatmapData?.data?.data;
-  const contests = contestsData?.data?.data;
 
-  const xp = stats ? stats.totalSolved * 25 + stats.streak * 10 + (stats.contributions || 0) * 2 : 0;
+  const xp = stats?.total_xp ?? 0;
   const level = stats ? Math.floor(Math.max(0, xp - 1) / 100) + 1 : 1;
+  const todaySolved = stats?.today_solved ?? 0;
+  const claimed = stats?.claimed ?? false;
 
   const handleClaimXp = async () => {
     if (claiming || claimed) return;
@@ -423,10 +341,9 @@ function Dashboard() {
     try {
       await dailyStatsService.populate();
       toast.success("+250 XP claimed! Daily stats updated.");
-      setClaimed(true);
       refetchStats();
-    } catch {
-      toast.error("Failed to claim XP. Try again.");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to claim XP. Try again.");
     } finally {
       setClaiming(false);
     }
@@ -507,7 +424,7 @@ function Dashboard() {
       style={{ paddingBottom: "32px" }}
     >
       <GreetingBanner name={user?.name || "Coder"} onSync={handleSync} syncing={syncing} />
-      <AIMiniWidget onClaimXp={handleClaimXp} claiming={claiming} claimed={claimed} />
+      <AIMiniWidget onClaimXp={handleClaimXp} claiming={claiming} claimed={claimed} todaySolved={todaySolved} />
 
       <motion.div
         variants={{
@@ -565,10 +482,6 @@ function Dashboard() {
         <Card padding="md">
           <h3 style={sectionTitleStyle}>Recent Activity</h3>
           <ActivityFeed activities={activityData} />
-        </Card>
-        <Card padding="md">
-          <h3 style={sectionTitleStyle}>Upcoming Contests</h3>
-          <UpcomingContestsCard contests={contests} />
         </Card>
       </div>
     </motion.div>
