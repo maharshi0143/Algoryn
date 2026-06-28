@@ -193,30 +193,38 @@ function Analytics() {
                   }}>
                     {meta?.name || p.platform}
                   </p>
-                  <p style={{
-                    fontFamily: "var(--font-mono)", fontSize: "13px",
-                    margin: 0, color: "#888",
-                  }}>
-                    {p.total_solved || 0} problems solved
-                  </p>
+                  {Array.isArray(p.skills) && p.skills.length > 0 ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "8px" }}>
+                      {p.skills.map((skill, i) => (
+                        <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span style={{
+                            fontFamily: "var(--font-mono)", fontSize: "12px",
+                            color: "#555", minWidth: "120px",
+                          }}>
+                            {skill.name}
+                          </span>
+                          <span style={{ fontSize: "12px", color: "#FFB800", letterSpacing: "2px" }}>
+                            {"⭐".repeat(skill.stars)}
+                          </span>
+                          <span style={{
+                            fontFamily: "var(--font-mono)", fontSize: "11px",
+                            color: "#aaa", marginLeft: "4px",
+                          }}>
+                            {skill.stars}/5
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p style={{
+                      fontFamily: "var(--font-mono)", fontSize: "13px",
+                      margin: 0, color: "#888",
+                    }}>
+                      {p.total_solved || 0} problems solved
+                    </p>
+                  )}
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  {p.ranking ? (
-                    <>
-                      <p style={{
-                        fontFamily: "var(--font-heading)", fontWeight: 700,
-                        fontSize: "20px", margin: "0 0 2px", color: "#FFB800",
-                      }}>
-                        {"⭐".repeat(p.ranking)}
-                      </p>
-                      <p style={{
-                        fontFamily: "var(--font-mono)", fontSize: "11px",
-                        margin: "0 0 8px", color: "#aaa",
-                      }}>
-                        {p.ranking} star{p.ranking > 1 ? "s" : ""}
-                      </p>
-                    </>
-                  ) : null}
                   {p.rating ? (
                     <>
                       <p style={{

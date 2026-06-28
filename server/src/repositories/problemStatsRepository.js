@@ -25,23 +25,23 @@ const findProblemStatsByProfileId = async (profileId) => {
 };
 
 // Create problem stats for a profile
-const createProblemStats = async (profileId, totalSolved, easyCount, mediumCount, hardCount, rating, ranking, streak) => {
+const createProblemStats = async (profileId, totalSolved, easyCount, mediumCount, hardCount, rating, ranking, streak, skills) => {
     const result = await db.query(
-        `INSERT INTO problem_stats(profile_id, total_solved, easy_count, medium_count, hard_count, rating, ranking, streak)
-         VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-        [profileId, totalSolved, easyCount, mediumCount, hardCount, rating, ranking, streak]
+        `INSERT INTO problem_stats(profile_id, total_solved, easy_count, medium_count, hard_count, rating, ranking, streak, skills)
+         VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+        [profileId, totalSolved, easyCount, mediumCount, hardCount, rating, ranking, streak, skills ? JSON.stringify(skills) : "[]"]
     );
     return result.rows[0];
 };
 
 // Update problem stats for a profile
-const updateProblemStats = async (profileId, totalSolved, easyCount, mediumCount, hardCount, rating, ranking, streak) => {
+const updateProblemStats = async (profileId, totalSolved, easyCount, mediumCount, hardCount, rating, ranking, streak, skills) => {
     const result = await db.query(
         `UPDATE problem_stats
          SET total_solved = $1, easy_count = $2, medium_count = $3, hard_count = $4,
-             rating = $5, ranking = $6, streak = $7, last_synced = CURRENT_TIMESTAMP
-         WHERE profile_id = $8 RETURNING *`,
-        [totalSolved, easyCount, mediumCount, hardCount, rating, ranking, streak, profileId]
+             rating = $5, ranking = $6, streak = $7, skills = $8, last_synced = CURRENT_TIMESTAMP
+         WHERE profile_id = $9 RETURNING *`,
+        [totalSolved, easyCount, mediumCount, hardCount, rating, ranking, streak, skills ? JSON.stringify(skills) : "[]", profileId]
     );
     return result.rows[0];
 };

@@ -255,12 +255,16 @@ const syncHackerRank = async (userId) => {
 
     const existingStats = await problemStatsRepository.findProblemStatsByProfileId(profile.id);
 
-    const stars = Array.isArray(badgeData?.badges) && badgeData.badges.length > 0
-        ? Math.max(...badgeData.badges.map((b) => parseInt(b.id?.split(":").pop()) || 0), 0)
-        : 0;
+    const skills = Array.isArray(badgeData?.badges) && badgeData.badges.length > 0
+        ? badgeData.badges.map((b) => ({
+              name: b.displayName,
+              stars: parseInt(b.id?.split(":").pop()) || 0,
+          }))
+        : [];
+    const maxStars = skills.reduce((max, s) => Math.max(max, s.stars), 0);
 
     if (!existingStats) {
-        const result = await problemStatsRepository.createProblemStats(profile.id, 0, 0, 0, 0, 0, stars, 0);
+        const result = await problemStatsRepository.createProblemStats(profile.id, 0, 0, 0, 0, 0, maxStars, 0, skills);
         notificationService.sendNotification(userId, "sync", "HackerRank synced successfully").catch(err => logger.error("Sync notification failed", err));
         return result;
     }
@@ -268,7 +272,7 @@ const syncHackerRank = async (userId) => {
     const result = await problemStatsRepository.updateProblemStats(
         profile.id, 0,
         existingStats.easy_count, existingStats.medium_count, existingStats.hard_count,
-        0, stars, existingStats.streak
+        0, maxStars, existingStats.streak, skills
     );
     notificationService.sendNotification(userId, "sync", "HackerRank synced successfully").catch(err => logger.error("Sync notification failed", err));
     return result;

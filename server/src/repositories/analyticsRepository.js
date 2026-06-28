@@ -4,7 +4,7 @@ const db = require("../config/knex");
 const getPlatformComparison = async (userId) => {
     return db("coding_profiles as cp")
         .join("problem_stats as ps", "cp.id", "ps.profile_id")
-        .select("cp.platform", "ps.total_solved", "ps.rating", "ps.ranking")
+        .select("cp.platform", "ps.total_solved", "ps.rating", "ps.ranking", "ps.skills")
         .where("cp.user_id", userId)
         .orderBy("ps.total_solved", "desc");
 };
