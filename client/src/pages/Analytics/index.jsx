@@ -201,6 +201,22 @@ function Analytics() {
                   </p>
                 </div>
                 <div style={{ textAlign: "right" }}>
+                  {p.ranking ? (
+                    <>
+                      <p style={{
+                        fontFamily: "var(--font-heading)", fontWeight: 700,
+                        fontSize: "20px", margin: "0 0 2px", color: "#FFB800",
+                      }}>
+                        {"⭐".repeat(p.ranking)}
+                      </p>
+                      <p style={{
+                        fontFamily: "var(--font-mono)", fontSize: "11px",
+                        margin: "0 0 8px", color: "#aaa",
+                      }}>
+                        {p.ranking} star{p.ranking > 1 ? "s" : ""}
+                      </p>
+                    </>
+                  ) : null}
                   {p.rating ? (
                     <>
                       <p style={{

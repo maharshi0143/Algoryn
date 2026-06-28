@@ -255,27 +255,21 @@ const syncHackerRank = async (userId) => {
 
     const existingStats = await problemStatsRepository.findProblemStatsByProfileId(profile.id);
 
-    const totalSolved = hackerRankProfile.totalSolved || 0;
-
     const stars = Array.isArray(badgeData?.badges) && badgeData.badges.length > 0
         ? Math.max(...badgeData.badges.map((b) => parseInt(b.id?.split(":").pop()) || 0), 0)
         : 0;
 
-    const today = new Date();
-
     if (!existingStats) {
-        const result = await problemStatsRepository.createProblemStats(profile.id, totalSolved, 0, 0, 0, 0, stars, 0);
-        await dailyStatsRepository.upsertDailyStats(userId, today, totalSolved, 0, 0, 0, 0);
+        const result = await problemStatsRepository.createProblemStats(profile.id, 0, 0, 0, 0, 0, stars, 0);
         notificationService.sendNotification(userId, "sync", "HackerRank synced successfully").catch(err => logger.error("Sync notification failed", err));
         return result;
     }
 
     const result = await problemStatsRepository.updateProblemStats(
-        profile.id, totalSolved,
+        profile.id, 0,
         existingStats.easy_count, existingStats.medium_count, existingStats.hard_count,
         0, stars, existingStats.streak
     );
-    await dailyStatsRepository.upsertDailyStats(userId, today, totalSolved, 0, 0, 0, 0);
     notificationService.sendNotification(userId, "sync", "HackerRank synced successfully").catch(err => logger.error("Sync notification failed", err));
     return result;
 };
