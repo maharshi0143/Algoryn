@@ -37,18 +37,30 @@ const findHeatmapStats = async (userId) => {
 };
 
 // Upsert daily stats for a user on a given date
-const upsertDailyStats = async (userId, date, problemsSolved, easyCount, mediumCount, hardCount, githubContributions) => {
+const upsertDailyStats = async (userId, date, problemsSolved, easyCount, mediumCount, hardCount, githubContributions, cumulativeTotal) => {
     const result = await db.query(
-        `INSERT INTO daily_stats(user_id, date, problems_solved, easy_count, medium_count, hard_count, github_contributions)
-         VALUES($1, $2, $3, $4, $5, $6, $7)
+        `INSERT INTO daily_stats(user_id, date, problems_solved, easy_count, medium_count, hard_count, github_contributions, cumulative_total)
+         VALUES($1, $2, $3, $4, $5, $6, $7, $8)
          ON CONFLICT (user_id, date)
          DO UPDATE SET problems_solved = EXCLUDED.problems_solved,
                        easy_count = EXCLUDED.easy_count,
                        medium_count = EXCLUDED.medium_count,
                        hard_count = EXCLUDED.hard_count,
-                       github_contributions = EXCLUDED.github_contributions
+                       github_contributions = EXCLUDED.github_contributions,
+                       cumulative_total = EXCLUDED.cumulative_total
          RETURNING *`,
-        [userId, date, problemsSolved, easyCount, mediumCount, hardCount, githubContributions]
+        [userId, date, problemsSolved, easyCount, mediumCount, hardCount, githubContributions, cumulativeTotal]
+    );
+    return result.rows[0];
+};
+
+const findLatestBeforeDate = async (userId, beforeDate) => {
+    const result = await db.query(
+        `SELECT * FROM daily_stats
+         WHERE user_id = $1 AND date < $2
+         ORDER BY date DESC
+         LIMIT 1`,
+        [userId, beforeDate]
     );
     return result.rows[0];
 };
@@ -82,6 +94,7 @@ module.exports = {
     findMonthlyStats,
     findHeatmapStats,
     upsertDailyStats,
+    findLatestBeforeDate,
     findByUserAndDate,
     setClaimed,
     sumClaimedXP,

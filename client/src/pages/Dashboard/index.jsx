@@ -339,8 +339,10 @@ function Dashboard() {
     if (claiming || claimed) return;
     setClaiming(true);
     try {
-      await dailyStatsService.populate();
-      toast.success("+250 XP claimed! Daily stats updated.");
+      const res = await dailyStatsService.populate();
+      const solved = res?.data?.data?.problems_solved ?? 0;
+      const xpEarned = solved * 25;
+      toast.success(`+${xpEarned} XP claimed! (${solved} problem${solved !== 1 ? "s" : ""})`);
       refetchStats();
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to claim XP. Try again.");
