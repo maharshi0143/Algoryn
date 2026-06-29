@@ -18,9 +18,8 @@ const populateDailyStats = async (userId) => {
         throw new ApiError(HTTP_STATUS.BAD_REQUEST, "You already claimed XP today");
     }
 
-    // Compute daily delta: difference from last known cumulative total
-    const prev = await dailyStatsRepository.findLatestBeforeDate(userId, today);
-    const prevCumulative = Number(prev?.cumulative_total ?? 0);
+    // Compute daily delta: difference from highest previous cumulative total
+    const prevCumulative = await dailyStatsRepository.getMaxCumulativeBeforeDate(userId, today);
     const delta = Math.max(0, todayCumulative - prevCumulative);
 
     await dailyStatsRepository.upsertDailyStats(

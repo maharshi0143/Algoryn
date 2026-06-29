@@ -175,8 +175,9 @@ function Analytics() {
     value: Number(m.problems_solved || 0),
   }));
 
-  const platformTabs = platforms.length > 0
-    ? platforms.map((p) => {
+  const nonGithubPlatforms = platforms.filter((p) => p.platform !== "github");
+  const platformTabs = nonGithubPlatforms.length > 0
+    ? nonGithubPlatforms.map((p) => {
         const meta = PLATFORMS.find((pf) => pf.id === p.platform);
         return {
           label: meta?.name || p.platform,
@@ -217,13 +218,6 @@ function Analytics() {
                         </div>
                       ))}
                     </div>
-                  ) : p.platform === "github" ? (
-                    <p style={{
-                      fontFamily: "var(--font-mono)", fontSize: "13px",
-                      margin: 0, color: "#888",
-                    }}>
-                      {p.repositories || 0} repositories
-                    </p>
                   ) : (
                     <p style={{
                       fontFamily: "var(--font-mono)", fontSize: "13px",
@@ -299,16 +293,16 @@ function Analytics() {
         gridTemplateColumns: `repeat(${isMobile ? 2 : 4}, 1fr)`,
         gap: "16px", marginBottom: "24px",
       }}>
-        {PLATFORMS.map((p) => {
+        {PLATFORMS.filter((p) => p.id !== "github").map((p) => {
           const match = platforms.find((pf) => pf.platform === p.id);
           return (
             <StatCard
               key={p.id}
               icon={<p.icon />}
-              value={p.id === "hackerrank" ? (match?.skills?.length || 0) : p.id === "github" ? (match?.repositories || 0) : (match?.total_solved || 0)}
+              value={p.id === "hackerrank" ? (match?.skills?.length || 0) : (match?.total_solved || 0)}
               label={p.name}
               color={p.color}
-              suffix={p.id === "hackerrank" ? " skills" : p.id === "github" ? " repos" : ""}
+              suffix={p.id === "hackerrank" ? " skills" : ""}
             />
           );
         })}

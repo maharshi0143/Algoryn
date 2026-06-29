@@ -65,6 +65,16 @@ const findLatestBeforeDate = async (userId, beforeDate) => {
     return result.rows[0];
 };
 
+// Get the highest cumulative_total from all previous rows (robust against NULL corruption)
+const getMaxCumulativeBeforeDate = async (userId, beforeDate) => {
+    const result = await db.query(
+        `SELECT COALESCE(MAX(cumulative_total), 0) AS max_cumulative FROM daily_stats
+         WHERE user_id = $1 AND date < $2 AND cumulative_total IS NOT NULL`,
+        [userId, beforeDate]
+    );
+    return Number(result.rows[0]?.max_cumulative ?? 0);
+};
+
 const findByUserAndDate = async (userId, date) => {
     const result = await db.query(
         `SELECT * FROM daily_stats WHERE user_id = $1 AND date = $2`,
@@ -108,6 +118,7 @@ module.exports = {
     upsertDailyStats,
     upsertCalendarStats,
     findLatestBeforeDate,
+    getMaxCumulativeBeforeDate,
     findByUserAndDate,
     setClaimed,
     sumClaimedXP,
