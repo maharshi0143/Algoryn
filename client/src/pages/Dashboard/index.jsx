@@ -356,8 +356,13 @@ function Dashboard() {
   const handleSync = async () => {
     setSyncing(true);
     try {
-      await platformService.syncAll();
-      toast.success("Sync completed!");
+      const res = await platformService.syncAll();
+      const errors = res.data?.data?.errors;
+      if (errors && errors.length > 0) {
+        toast.error(`Sync failed for: ${errors.join(", ")}. Other platforms synced successfully.`);
+      } else {
+        toast.success("Sync completed!");
+      }
       refetchStats();
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
     } catch {

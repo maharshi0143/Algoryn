@@ -217,6 +217,13 @@ function Analytics() {
                         </div>
                       ))}
                     </div>
+                  ) : p.platform === "github" ? (
+                    <p style={{
+                      fontFamily: "var(--font-mono)", fontSize: "13px",
+                      margin: 0, color: "#888",
+                    }}>
+                      {p.repositories || 0} repositories
+                    </p>
                   ) : (
                     <p style={{
                       fontFamily: "var(--font-mono)", fontSize: "13px",
@@ -298,10 +305,10 @@ function Analytics() {
             <StatCard
               key={p.id}
               icon={<p.icon />}
-              value={p.id === "hackerrank" ? (match?.skills?.length || 0) : (match?.total_solved || 0)}
+              value={p.id === "hackerrank" ? (match?.skills?.length || 0) : p.id === "github" ? (match?.repositories || 0) : (match?.total_solved || 0)}
               label={p.name}
               color={p.color}
-              suffix={p.id === "hackerrank" ? " skills" : ""}
+              suffix={p.id === "hackerrank" ? " skills" : p.id === "github" ? " repos" : ""}
             />
           );
         })}

@@ -289,12 +289,13 @@ const syncHackerRank = async (userId) => {
 
 // Sync data from all platforms the user has profiles for
 const syncAll = async (userId) => {
-    const result = {};
+    const result = { errors: [] };
 
     try {
         result.github = await syncGithub(userId);
     } catch (err) {
         logger.error(`GitHub sync failed for user ${userId}:`, err.stack || err.message);
+        result.errors.push("GitHub");
         result.github = null;
     }
 
@@ -302,6 +303,7 @@ const syncAll = async (userId) => {
         result.leetcode = await syncLeetCode(userId);
     } catch (err) {
         logger.error(`LeetCode sync failed for user ${userId}:`, err.stack || err.message);
+        result.errors.push("LeetCode");
         result.leetcode = null;
     }
 
@@ -309,6 +311,7 @@ const syncAll = async (userId) => {
         result.codeforces = await syncCodeforces(userId);
     } catch (err) {
         logger.error(`Codeforces sync failed for user ${userId}:`, err.stack || err.message);
+        result.errors.push("Codeforces");
         result.codeforces = null;
     }
 
@@ -316,6 +319,7 @@ const syncAll = async (userId) => {
         result.codechef = await syncCodeChef(userId);
     } catch (err) {
         logger.error(`CodeChef sync failed for user ${userId}:`, err.stack || err.message);
+        result.errors.push("CodeChef");
         result.codechef = null;
     }
 
@@ -323,6 +327,7 @@ const syncAll = async (userId) => {
         result.gfg = await syncGFG(userId);
     } catch (err) {
         logger.error(`GFG sync failed for user ${userId}:`, err.stack || err.message);
+        result.errors.push("GeeksforGeeks");
         result.gfg = null;
     }
 
@@ -330,6 +335,7 @@ const syncAll = async (userId) => {
         result.hackerRank = await syncHackerRank(userId);
     } catch (err) {
         logger.error(`HackerRank sync failed for user ${userId}:`, err.stack || err.message);
+        result.errors.push("HackerRank");
         result.hackerRank = null;
     }
 

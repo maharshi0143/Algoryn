@@ -1,12 +1,18 @@
 const db = require("../config/knex");
 
-// Get total solved problems grouped by platform
+// Get total solved problems grouped by platform (with GitHub repos)
 const getPlatformComparison = async (userId) => {
-    return db("coding_profiles as cp")
+    const rows = await db("coding_profiles as cp")
         .join("problem_stats as ps", "cp.id", "ps.profile_id")
-        .select("cp.platform", "ps.total_solved", "ps.rating", "ps.ranking", "ps.skills")
+        .leftJoin("github_stats as gs", "cp.id", "gs.profile_id")
+        .select("cp.platform", "ps.total_solved", "ps.rating", "ps.ranking", "ps.skills", "gs.repositories")
         .where("cp.user_id", userId)
         .orderBy("ps.total_solved", "desc");
+
+    return rows.map((r) => ({
+        ...r,
+        repositories: r.platform === "github" ? (r.repositories ?? 0) : null,
+    }));
 };
 
 // Get aggregated counts by difficulty level
