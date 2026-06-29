@@ -39,4 +39,20 @@ const waitForDatabase = async (maxRetries = 10, baseDelay = 1000) => {
     }
 };
 
-module.exports = { pool, waitForDatabase };
+// Execute a callback within a database transaction
+const withTransaction = async (callback) => {
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+        const result = await callback(client);
+        await client.query("COMMIT");
+        return result;
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
+module.exports = { pool, waitForDatabase, withTransaction };

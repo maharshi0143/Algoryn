@@ -67,8 +67,8 @@ const allowedOrigins = process.env.CLIENT_URL
 
 app.use(cors({
         origin: (origin, callback) => {
-            if (!origin) return callback(null, true);
-            if (allowedOrigins.includes(origin)) {
+            if (!origin && process.env.NODE_ENV !== "development") return callback(new Error("Not allowed by CORS"));
+            if (!origin || allowedOrigins.includes(origin)) {
                 callback(null, true);
             } else {
                 callback(new Error("Not allowed by CORS"));

@@ -333,7 +333,7 @@ function Dashboard() {
   const heatmap = heatmapData?.data?.data;
 
   const xp = stats?.total_xp ?? 0;
-  const level = stats ? Math.floor(Math.max(0, xp - 1) / 100) + 1 : 1;
+  const level = stats ? Math.floor(xp / 100) + 1 : 1;
   const todaySolved = stats?.today_solved ?? 0;
   const claimed = stats?.claimed ?? false;
 

@@ -55,8 +55,7 @@ const syncGithub = async (userId) => {
             profile.id, githubProfile.public_repos, githubProfile.followers,
             githubProfile.following, totalStars, contributions, languages
         );
-        await dailyStatsRepository.upsertDailyStats(userId, today, 0, 0, 0, 0, contributions);
-        await problemStatsRepository.createProblemStats(profile.id, contributions, 0, 0, 0, 0, totalStars, 0);
+        await problemStatsRepository.createProblemStats(profile.id, 0, 0, 0, 0, 0, totalStars, 0);
         await sendNotif();
         return stats;
     }
@@ -66,9 +65,8 @@ const syncGithub = async (userId) => {
         githubProfile.following, totalStars, contributions, languages
     );
 
-    await dailyStatsRepository.upsertDailyStats(userId, today, 0, 0, 0, 0, contributions);
     await problemStatsRepository.updateProblemStats(
-        profile.id, contributions,
+        profile.id, 0,
         0, 0, 0, 0, totalStars, existingProblemStats?.streak ?? 0
     );
     await sendNotif();
@@ -131,7 +129,7 @@ const syncLeetCode = async (userId) => {
             await Promise.all(
                 Object.entries(cal).map(([ts, submissions]) => {
                     const date = new Date(Number(ts) * 1000);
-                    return dailyStatsRepository.upsertDailyStats(userId, date, Number(submissions), 0, 0, 0, 0);
+                    return dailyStatsRepository.upsertCalendarStats(userId, date, Number(submissions));
                 })
             );
         }
@@ -233,18 +231,15 @@ const syncGFG = async (userId) => {
     const mediumCount = gfgProfile.Medium || 0;
     const hardCount = gfgProfile.Hard || 0;
 
-    const today = new Date();
     const existingStats = await problemStatsRepository.findProblemStatsByProfileId(profile.id);
 
     if (!existingStats) {
         const stats = await problemStatsRepository.createProblemStats(profile.id, totalSolved, easyCount, mediumCount, hardCount, 0, 0, 0);
-        await dailyStatsRepository.upsertDailyStats(userId, today, totalSolved, easyCount, mediumCount, hardCount, 0);
         notificationService.sendNotification(userId, "sync", "GFG synced successfully").catch(err => logger.error("Sync notification failed", err));
         return stats;
     }
 
     const stats = await problemStatsRepository.updateProblemStats(profile.id, totalSolved, easyCount, mediumCount, hardCount, existingStats.rating, existingStats.ranking, existingStats.streak);
-    await dailyStatsRepository.upsertDailyStats(userId, today, totalSolved, easyCount, mediumCount, hardCount, 0);
     notificationService.sendNotification(userId, "sync", "GFG synced successfully").catch(err => logger.error("Sync notification failed", err));
     return stats;
 };

@@ -73,6 +73,18 @@ const findByUserAndDate = async (userId, date) => {
     return result.rows[0];
 };
 
+// Upsert calendar stats without affecting cumulative_total or claim status
+const upsertCalendarStats = async (userId, date, submissions) => {
+    const result = await db.query(
+        `INSERT INTO daily_stats(user_id, date, problems_solved)
+         VALUES($1, $2, $3)
+         ON CONFLICT (user_id, date)
+         DO UPDATE SET problems_solved = CASE WHEN daily_stats.cumulative_total IS NULL THEN EXCLUDED.problems_solved ELSE daily_stats.problems_solved END`,
+        [userId, date, submissions]
+    );
+    return result.rows[0];
+};
+
 const setClaimed = async (userId, date) => {
     const result = await db.query(
         `UPDATE daily_stats SET claimed = true WHERE user_id = $1 AND date = $2 RETURNING *`,
@@ -94,6 +106,7 @@ module.exports = {
     findMonthlyStats,
     findHeatmapStats,
     upsertDailyStats,
+    upsertCalendarStats,
     findLatestBeforeDate,
     findByUserAndDate,
     setClaimed,

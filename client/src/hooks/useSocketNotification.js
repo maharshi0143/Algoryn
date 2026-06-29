@@ -26,6 +26,13 @@ export function useSocketNotification(onNew) {
       return;
     }
 
+    socket.on("connect", () => {
+      const userId = useAuthStore.getState().user?.id;
+      if (userId) {
+        socket.emit("join", userId);
+      }
+    });
+
     socket.on("connect_error", () => {});
 
     socket.on("notification:new", (notification) => {
